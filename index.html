@@ -680,11 +680,9 @@ function renderBubbles(idx) {
 ═══════════════════════════════════════════════════════════ */
 function buildSystemPrompt(categoryIdx) {
     var d   = window.aiAnalysisData || {};
-    var cat = CHAT_CATEGORIES[categoryIdx];
-    console.log('=== PROPERTY TRANSIT DEBUG ===');
-    console.log('property_transit_history:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.property_transit_history : 'NULL'));
-    console.log('stress_transit_history:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.stress_transit_history : 'NULL'));
-    console.log('lagna_sign from data:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.lagna : 'NULL'));
+    var cat = (categoryIdx >= 0 && CHAT_CATEGORIES[categoryIdx])
+              ? CHAT_CATEGORIES[categoryIdx]
+              : { name: 'General', task: 'Answer the question using the chart data provided.' };
 
     // SAV scores — keyed as House_1 … House_12
     var sav = {};
@@ -911,9 +909,6 @@ function buildSystemPrompt(categoryIdx) {
     }
 
     // Build stress transit history string
-    console.log('=== propertyHistoryStr sent to Grok:');
-    console.log(propertyHistoryStr);
-
     var stressHistoryStr = 'Not available';
     if (d.stress_transit_history && d.stress_transit_history.length > 0) {
         stressHistoryStr = d.stress_transit_history.map(function(y) {
@@ -1078,9 +1073,6 @@ function buildSystemPrompt(categoryIdx) {
         'STRESS & MENTAL PRESSURE TRIGGERS (pre-calculated — use for health/soul/anxiety topics):\n' +
         stressTriggers + '\n' +
 
-        'STRESS TRANSIT HISTORY (Saturn · Mars · Ketu · Sade Sati last 7 years):\n' +
-        '  ' + stressHistoryStr + '\n\n' +
-
         'SAV BINDUS BY HOUSE (30+ = Reservoir, <25 = Leak):\n' + JSON.stringify(sav) + '\n\n' +
 
         'D9 NAVAMSA (inner strength / soul purpose):\n' + d9str + '\n\n' +
@@ -1102,30 +1094,6 @@ function buildSystemPrompt(categoryIdx) {
         '- Ketu transit = detachment and letting go in that house area.\n' +
         '- Always check if Saturn or Jupiter aspects (looks at) the 10th house from its transit position.\n\n' +
 
-        '4TH HOUSE DETAILS:\n' +
-        '  Lord: ' + fourthHouseLord + '\n' +
-        '  Occupants: ' + (fourthHousePlanets.join(', ') || 'None') + '\n\n' +
-
-        'PROPERTY ACTIVATION HISTORY (Saturn · Jupiter · Mars last 7 years — includes Vedic aspects):\n' +
-        '  ' + propertyHistoryStr + '\n\n' +
-
-        'PROPERTY DASHA ACTIVATIONS (current periods):\n' +
-        '  ' + propertyDashaStr + '\n\n' +
-
-        'PROPERTY DETECTION RULES:\n' +
-        '- NEVER say no property activation without checking ALL 4 triggers:\n' +
-        '  (1) Saturn transiting OR aspecting 4th house in last 7 years\n' +
-        '  (2) Jupiter in or aspecting 4th house (5th, 7th, 9th special aspects)\n' +
-        '  (3) Current major or sub-period lord is 4th house lord\n' +
-        '  (4) Current major or sub-period lord sits in 4th house\n' +
-        '- If ANY one trigger is true = property event is likely\n' +
-        '- If TWO or more are true = property event is almost certain\n' +
-        '- Saturn in 4th = pressure to resolve home situation (buy, sell, renovate, relocate)\n' +
-        '- Jupiter in or aspecting 4th = opportunity and expansion in home area\n' +
-        '- Mars in or aspecting 4th = property action, renovation, urgency, or dispute\n' +
-        '- 4th lord period = the person thinks about and acts on home matters\n' +
-        '- Planet in 4th house period = that planet\'s energy activates home life\n\n' +
-
         'VEDIC ASPECT RULES (Graha Drishti — use these for ALL transit and natal analysis):\n' +
         '- ALL planets aspect the 7th house from their position (opposition)\n' +
         '- SATURN special aspects: also aspects 3rd and 10th house from its position\n' +
@@ -1133,9 +1101,45 @@ function buildSystemPrompt(categoryIdx) {
         '- MARS special aspects: also aspects 4th and 8th house from its position\n' +
         '- Rahu/Ketu aspect the 5th and 9th from their positions (like Jupiter)\n' +
         '- Example: Saturn in House 1 aspects Houses 3, 7, 10\n' +
-        '- Example: Jupiter in House 5 aspects Houses 9, 11 (5+7-1), 1 (5+9-12)\n' +
-        '- Example: Mars in House 2 aspects Houses 5, 6 (2+4), 9 (2+7)\n' +
         '- NEVER say a planet "does not aspect" a house without checking these special aspects\n';
+
+    // ── Conditional: stress transit history (Health or typed) ──
+    var isHealthQ    = (categoryIdx === 0);
+    var isPropertyQ  = (categoryIdx === 4);
+    var isTyped      = (categoryIdx < 0);
+
+    if (isHealthQ || isTyped) {
+        systemPrompt +=
+            '\nSTRESS TRANSIT HISTORY (Saturn · Mars · Ketu · Sade Sati last 7 years):\n' +
+            '  ' + stressHistoryStr + '\n\n';
+    }
+
+    // ── Conditional: property transit history (Property & Vehicles or typed) ──
+    if (isPropertyQ || isTyped) {
+        systemPrompt +=
+            '4TH HOUSE DETAILS:\n' +
+            '  Lord: ' + fourthHouseLord + '\n' +
+            '  Occupants: ' + (fourthHousePlanets.join(', ') || 'None') + '\n\n' +
+
+            'PROPERTY ACTIVATION HISTORY (Saturn · Jupiter · Mars last 7 years — includes Vedic aspects):\n' +
+            '  ' + propertyHistoryStr + '\n\n' +
+
+            'PROPERTY DASHA ACTIVATIONS (current periods):\n' +
+            '  ' + propertyDashaStr + '\n\n' +
+
+            'PROPERTY DETECTION RULES:\n' +
+            '- NEVER say no property activation without checking ALL 4 triggers:\n' +
+            '  (1) Saturn transiting OR aspecting 4th house in last 7 years\n' +
+            '  (2) Jupiter in or aspecting 4th house (5th, 7th, 9th special aspects)\n' +
+            '  (3) Current major or sub-period lord is 4th house lord\n' +
+            '  (4) Current major or sub-period lord sits in 4th house\n' +
+            '- If ANY one trigger is true = property event is likely\n' +
+            '- If TWO or more are true = property event is almost certain\n' +
+            '- Saturn in 4th = pressure to resolve home situation (buy, sell, renovate, relocate)\n' +
+            '- Jupiter in or aspecting 4th = opportunity and expansion in home area\n' +
+            '- Mars in or aspecting 4th = property action, renovation, urgency, or dispute\n' +
+            '- 4th lord period = the person thinks about and acts on home matters\n' +
+            '- Planet in 4th house period = that planet\'s energy activates home life\n';
 
     return systemPrompt;
 }
@@ -1179,7 +1183,7 @@ function sendChatMessage() {
     fetch(BACKEND_URL + '/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: buildSystemPrompt(activeCategoryIdx), messages: chatHistory })
+        body: JSON.stringify({ system: buildSystemPrompt(isBubble ? activeCategoryIdx : -1), messages: chatHistory })
     })
     .then(function(res) {
         if (!res.ok) throw new Error('Server returned ' + res.status);
@@ -1189,17 +1193,6 @@ function sendChatMessage() {
         var answer = data.answer || data.content || (data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null) || 'The cosmos did not respond. Please try again.';
         chatHistory.push({ role: 'assistant', content: answer });
         replaceTyping(typingId, answer);
-        if (data.tokens && data.tokens.total) {
-            var tokenEl = document.getElementById(typingId);
-            if (tokenEl) {
-                var tokenLine = document.createElement('div');
-                tokenLine.style.cssText = 'font-size:0.7rem;color:#aaa;margin-top:0.4rem;padding-top:0.3rem;border-top:1px solid #f0f0f0;';
-                tokenLine.textContent = '\u21b3 ' + data.tokens.total.toLocaleString() +
-                    ' tokens  (' + data.tokens.input.toLocaleString() + ' in \u00b7 ' +
-                    data.tokens.output.toLocaleString() + ' out)  \u00b7 ' + (data.tokens.model || 'AI');
-                tokenEl.appendChild(tokenLine);
-            }
-        }
         sendBtn.disabled = false;
         input.focus();
     })
