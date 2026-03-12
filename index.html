@@ -680,6 +680,10 @@ function renderBubbles(idx) {
 function buildSystemPrompt(categoryIdx) {
     var d   = window.aiAnalysisData || {};
     var cat = CHAT_CATEGORIES[categoryIdx];
+    console.log('=== PROPERTY TRANSIT DEBUG ===');
+    console.log('property_transit_history:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.property_transit_history : 'NULL'));
+    console.log('stress_transit_history:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.stress_transit_history : 'NULL'));
+    console.log('lagna_sign from data:', JSON.stringify(window.aiAnalysisData ? window.aiAnalysisData.lagna : 'NULL'));
 
     // SAV scores — keyed as House_1 … House_12
     var sav = {};
@@ -906,6 +910,9 @@ function buildSystemPrompt(categoryIdx) {
     }
 
     // Build stress transit history string
+    console.log('=== propertyHistoryStr sent to Grok:');
+    console.log(propertyHistoryStr);
+
     var stressHistoryStr = 'Not available';
     if (d.stress_transit_history && d.stress_transit_history.length > 0) {
         stressHistoryStr = d.stress_transit_history.map(function(y) {
