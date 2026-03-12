@@ -379,6 +379,7 @@ var sessionChartGenerated   = false;
 var sessionAnalysisProvided = false;
 var sessionBirthDate        = '';
 var sessionBirthPlace       = '';
+var sessionBirthTime        = '';
 var sessionStartTime        = null;
 
 /* ═══════════════════════════════════════════════════════════
@@ -501,8 +502,9 @@ function generateChart(event) {
 
         sessionBirthDate      = date;
         sessionBirthPlace     = selectedLocation ? selectedLocation.name.split(',')[0] : '';
+        sessionBirthTime      = time;
         sessionChartGenerated = true;
-        sendSessionEvent({ event: 'chart_generated', birth_date: sessionBirthDate, birth_place: sessionBirthPlace });
+        sendSessionEvent({ event: 'chart_generated', birth_date: sessionBirthDate, birth_place: sessionBirthPlace, birth_time: sessionBirthTime });
     })
     .catch(function(error) {
         chartDisplay.innerHTML = '<div style="color:#dc2626;text-align:center;padding:2rem;">Error generating chart. Check the server is running.</div>';
@@ -1320,6 +1322,7 @@ function endSession() {
         questions:         sessionQuestions,
         birth_date:        sessionBirthDate,
         birth_place:       sessionBirthPlace,
+        birth_time:        sessionBirthTime,
         chart_generated:   sessionChartGenerated,
         analysis_provided: sessionAnalysisProvided
     };
