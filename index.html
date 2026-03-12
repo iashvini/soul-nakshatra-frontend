@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul Nakshatra · Vedic Astrology</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #f7f7f8;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0ede8;
+            --text-primary: #2d2d2d;
+            --text-secondary: #666666;
+            --accent-primary: #7c5cff;
+            --accent-secondary: #9b7bff;
+            --border-color: #e0e0e0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+        header { padding: 3.5rem 0 2.5rem; text-align: center; animation: fadeInDown 0.6s ease-out; }
+
+        @keyframes fadeInDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeInUp   { from { opacity:0; transform:translateY(20px);  } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin       { to { transform: rotate(360deg); } }
+        @keyframes slideDown  { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse      { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        @keyframes typingBounce { 0%,60%,100% { transform:translateY(0); opacity:0.4; } 30% { transform:translateY(-6px); opacity:1; } }
+
+        h1 { font-family:'Crimson Pro',serif; font-size:3.2rem; font-weight:600; color:var(--text-primary); letter-spacing:-0.02em; margin-bottom:0.4rem; }
+        .tagline { font-size:1rem; color:var(--text-secondary); letter-spacing:0.08em; }
+
+        .card { background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:2rem; box-shadow:var(--shadow-sm); transition:box-shadow 0.3s; }
+        .card:hover { box-shadow:var(--shadow-md); }
+
+        .main-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem; animation:fadeInUp 0.6s ease-out 0.2s both; }
+
+        h2 { font-family:'Crimson Pro',serif; font-size:1.6rem; font-weight:600; color:var(--text-primary); margin-bottom:1.5rem; letter-spacing:-0.01em; }
+        h3 { font-family:'Inter',sans-serif; font-size:1.05rem; font-weight:600; color:var(--text-primary); margin-bottom:0.75rem; }
+
+        .form-group { margin-bottom:1.4rem; }
+        label { display:block; margin-bottom:0.4rem; font-size:0.85rem; font-weight:500; color:var(--text-secondary); }
+        input[type="text"], input[type="date"], input[type="time"] {
+            width:100%; padding:0.7rem 1rem; background:var(--bg-primary);
+            border:1.5px solid var(--border-color); border-radius:var(--radius-sm);
+            color:var(--text-primary); font-size:0.92rem; font-family:'Inter',sans-serif; transition:all 0.2s;
+        }
+        input:focus { outline:none; border-color:var(--accent-primary); background:var(--bg-secondary); box-shadow:0 0 0 3px rgba(124,92,255,0.1); }
+        .input-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+        .btn { padding:0.8rem 1.6rem; background:var(--accent-primary); border:none; border-radius:var(--radius-sm); color:#fff; font-family:'Inter',sans-serif; font-size:0.92rem; font-weight:500; cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow-sm); }
+        .btn:hover { background:var(--accent-secondary); transform:translateY(-1px); box-shadow:var(--shadow-md); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .btn-success { background:#16a34a !important; }
+
+        #placeResults { background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-sm); margin-top:0.5rem; max-height:220px; overflow-y:auto; display:none; position:absolute; width:calc(100% - 4rem); z-index:200; box-shadow:var(--shadow-lg); }
+        .place-item { padding:0.7rem 1rem; cursor:pointer; border-bottom:1px solid var(--border-color); font-size:0.88rem; transition:background 0.15s; }
+        .place-item:last-child { border-bottom:none; }
+        .place-item:hover { background:var(--bg-primary); }
+
+        .loading { display:flex; align-items:center; gap:0.75rem; color:var(--text-secondary); }
+        .spinner { width:18px; height:18px; border:2px solid var(--border-color); border-top-color:var(--accent-primary); border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0; }
+
+        .error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); padding:0.85rem 1rem; color:#dc2626; margin-top:1rem; display:none; font-size:0.88rem; }
+        .error.show { display:block; animation:slideDown 0.3s ease-out; }
+
+        #chartDisplay { background:var(--bg-tertiary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:1.5rem; min-height:120px; font-size:0.9rem; line-height:1.7; }
+
+        #cosmicSection { margin-bottom:2rem; }
+
+        .cosmic-loading { background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:3rem 2rem; text-align:center; animation:fadeInUp 0.4s ease-out; }
+        .cosmic-loading .big-spinner { width:40px; height:40px; border:3px solid var(--border-color); border-top-color:var(--accent-primary); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1.2rem; }
+        .cosmic-loading-title { font-family:'Crimson Pro',serif; font-size:1.4rem; font-weight:600; color:var(--text-primary); margin-bottom:0.5rem; }
+        .cosmic-loading-sub { color:var(--text-secondary); font-size:0.9rem; animation:pulse 2s ease-in-out infinite; }
+
+        footer { text-align:center; padding:2.5rem 0; border-top:1px solid var(--border-color); margin-top:3rem; color:var(--text-secondary); font-size:0.88rem; }
+
+        /* Analysis sections */
+        #analysis-content h1 { font-size:1.3rem; color:white; margin:0 0 1em 0; padding:0.75em 1em; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.12); font-family:'Inter',sans-serif; font-weight:600; background:#2c3e50; }
+        #analysis-content h2 { font-size:1.05rem; color:#2c3e50; margin:1.5em 0 0.8em 0; padding:0.65em 1em; background:#f8f9fa; border-left:4px solid #34495e; border-radius:6px; font-family:'Inter',sans-serif; font-weight:600; }
+        #analysis-content h3 { font-size:1rem; color:#2c3e50; margin:1em 0 0.5em 0; font-weight:600; }
+
+        .personality-section { background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding:0; border-radius:12px; margin:0 0 2em 0; border-left:5px solid #7c5cff; overflow:hidden; box-shadow:0 4px 20px rgba(124,92,255,0.08); }
+        .personality-section h1 { background:linear-gradient(135deg,#4a3580 0%,#6b4fa0 100%) !important; box-shadow:0 2px 8px rgba(0,0,0,0.12) !important; color:white !important; font-size:1.3rem !important; letter-spacing:normal !important; text-transform:none !important; padding:0.75em 1em !important; margin:0 !important; border-radius:0 !important; font-family:'Inter',sans-serif !important; font-weight:600 !important; }
+        .personality-section .personality-body { font-family:'Inter',sans-serif; font-size:0.95rem; line-height:1.8; color:#2c3e50; padding:1.5em 2em 2em; text-align:left; }
+        .personality-section .personality-body p { text-align:left; margin-bottom:0.5em; }
+        .personality-section .career-field-box { background:white; border-left-color:#7c5cff; margin:1em 0 0 0; text-align:left; }
+        .personality-section .career-match { background:rgba(124,92,255,0.1); color:#7c5cff; border-color:rgba(124,92,255,0.25); }
+        .personality-section strong { color:#2c3e50; }
+
+        .major-events-section { background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding:0; border-radius:12px; margin:2em 0; border-left:5px solid #e67e22; overflow:hidden; }
+        .major-events-section h1 { background:#d35400; border-radius:0; margin:0; padding:0.75em 1em; }
+        .major-events-section h2 { border-left-color:#e67e22; }
+        .major-events-section > *:not(h1) { padding-left:2em; padding-right:2em; }
+        .major-events-section > p:first-of-type, .major-events-section > div.event-label:first-of-type { margin-top:1.5em; }
+        .major-events-section > p:last-child, .major-events-section > div:last-child { padding-bottom:1.5em; }
+
+        .current-cycle-section { background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding:0; border-radius:12px; margin:2em 0; border-left:5px solid #27ae60; overflow:hidden; box-shadow:0 4px 20px rgba(39,174,96,0.08); }
+        .current-cycle-section h1 { background:#1e8449; border-radius:0; margin:0; padding:0.75em 1em; }
+        .current-cycle-section h2 { border-left-color:#27ae60; }
+        .current-cycle-section > *:not(h1) { padding-left:2em; padding-right:2em; }
+        .current-cycle-section > p:first-of-type { margin-top:1.5em; }
+        .current-cycle-section > p:last-child, .current-cycle-section > div:last-child { padding-bottom:1.5em; }
+
+        .event-card { background:white; padding:1.5em; margin:1em 0; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #e67e22; }
+        .priority-item { background:white; padding:1.2em; margin:0.8em 0; border-radius:8px; border-left:4px solid #27ae60; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+        .life-area-card { background:white; padding:1.5em; margin:1.2em 0; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.08); border-left:4px solid #2980b9; }
+        #analysis-content strong { color:#2c3e50; font-weight:600; }
+        .confidence-badge { display:inline-block; padding:0.2em 0.7em; background:#34495e; color:white; border-radius:20px; font-size:0.85em; font-weight:600; margin-left:0.4em; }
+        .career-field-box { background:linear-gradient(135deg,#faf8f3 0%,#f5f0e8 100%); color:#2c3e50; padding:1.5em; border-radius:12px; margin:1.5em 0; border-left:5px solid #d4a574; }
+        .career-field-box strong { color:#8b6f47; font-weight:700; }
+        .career-match { display:inline-block; background:rgba(139,111,71,0.15); color:#8b6f47; padding:0.3em 0.8em; border-radius:20px; font-size:0.9em; margin-left:0.5em; border:1px solid rgba(139,111,71,0.3); }
+
+        .event-label { display:inline-block; padding:0.3em 0.9em; border-radius:20px; font-size:0.78rem; font-weight:600; letter-spacing:0.05em; margin:1em 0 0.5em 0; font-family:'Inter',sans-serif; }
+        .stress-label { background:rgba(220,38,38,0.1); color:#dc2626; border:1px solid rgba(220,38,38,0.2); }
+        .gains-label { background:rgba(22,163,74,0.1); color:#16a34a; border:1px solid rgba(22,163,74,0.2); }
+        .property-label { background:rgba(37,99,235,0.1); color:#2563eb; border:1px solid rgba(37,99,235,0.2); }
+        .relationship-label { background:rgba(124,92,255,0.1); color:#7c5cff; border:1px solid rgba(124,92,255,0.2); }
+
+        /* ═══ CHAT / BUBBLE SECTION ═══ */
+        #chatSection { margin-bottom:3rem; animation:fadeInUp 0.5s ease-out; }
+
+        .chat-header { text-align:center; margin-bottom:1.75rem; }
+        .chat-header-title { font-family:'Crimson Pro',serif; font-size:1.9rem; font-weight:600; color:var(--text-primary); margin-bottom:0.3rem; }
+        .chat-header-sub { color:var(--text-secondary); font-size:0.88rem; }
+
+        .chat-categories { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center; margin-bottom:1.25rem; }
+        .cat-tab { padding:0.45rem 1rem; background:var(--bg-secondary); border:1.5px solid var(--border-color); border-radius:20px; font-size:0.8rem; font-weight:500; cursor:pointer; color:var(--text-secondary); font-family:'Inter',sans-serif; transition:all 0.2s; white-space:nowrap; }
+        .cat-tab:hover { background:var(--bg-primary); color:var(--text-primary); }
+        .cat-tab.active { background:var(--accent-primary); color:white; border-color:var(--accent-primary); }
+
+        .bubble-row { display:flex; flex-wrap:wrap; gap:0.65rem; justify-content:center; margin-bottom:1.75rem; min-height:44px; }
+        .bubble-chip { padding:0.65rem 1.2rem; background:var(--bg-secondary); border:1.5px solid var(--accent-primary); border-radius:24px; font-size:0.875rem; cursor:pointer; color:var(--accent-primary); font-family:'Inter',sans-serif; font-weight:500; transition:all 0.2s; box-shadow:var(--shadow-sm); line-height:1.3; }
+        .bubble-chip:hover { background:var(--accent-primary); color:white; transform:translateY(-2px); box-shadow:var(--shadow-md); }
+
+        #chatMessages { max-height:500px; overflow-y:auto; display:flex; flex-direction:column; gap:1rem; padding:1.25rem; background:var(--bg-primary); border-radius:var(--radius-md); margin-bottom:1rem; border:1px solid var(--border-color); scroll-behavior:smooth; }
+
+        .chat-bubble-user { align-self:flex-end; background:var(--accent-primary); color:white; padding:0.8rem 1.1rem; border-radius:18px 18px 4px 18px; max-width:75%; font-size:0.9rem; line-height:1.55; box-shadow:0 2px 8px rgba(124,92,255,0.25); }
+        .chat-bubble-ai { align-self:flex-start; background:var(--bg-secondary); border:1px solid var(--border-color); padding:1rem 1.2rem; border-radius:18px 18px 18px 4px; max-width:85%; font-size:0.9rem; line-height:1.7; box-shadow:var(--shadow-sm); }
+        .chat-bubble-ai strong { color:var(--accent-primary); }
+        .ai-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; color:var(--accent-primary); text-transform:uppercase; margin-bottom:0.4rem; display:block; }
+
+        .typing-dots { display:flex; gap:5px; align-items:center; padding:0.25rem 0; }
+        .typing-dots span { width:7px; height:7px; background:var(--accent-primary); border-radius:50%; animation:typingBounce 1.2s ease-in-out infinite; opacity:0.6; }
+        .typing-dots span:nth-child(2) { animation-delay:0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay:0.4s; }
+
+        .chat-input-row { display:flex; gap:0.75rem; align-items:center; }
+        .chat-input-row input { flex:1; padding:0.8rem 1.1rem; border-radius:24px; border:1.5px solid var(--border-color); background:var(--bg-primary); font-family:'Inter',sans-serif; font-size:0.92rem; color:var(--text-primary); transition:all 0.2s; }
+        .chat-input-row input:focus { outline:none; border-color:var(--accent-primary); background:var(--bg-secondary); box-shadow:0 0 0 3px rgba(124,92,255,0.1); }
+        .chat-send-btn { width:44px; height:44px; border-radius:50%; background:var(--accent-primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; box-shadow:var(--shadow-sm); }
+        .chat-send-btn:hover { background:var(--accent-secondary); transform:scale(1.08); }
+        .chat-send-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+        .chat-send-btn svg { width:18px; height:18px; fill:white; }
+
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background:var(--border-color); border-radius:4px; }
+
+        @media (max-width:700px) {
+            .main-grid { grid-template-columns:1fr; }
+            h1 { font-size:2.4rem; }
+            .input-row { grid-template-columns:1fr; }
+            .container { padding:0 1.25rem; }
+            .chat-bubble-user, .chat-bubble-ai { max-width:92%; }
+            .cat-tab { font-size:0.75rem; padding:0.4rem 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>Soul Nakshatra</h1>
+        <p class="tagline">Soul. Stars. Synced.</p>
+    </header>
+
+    <main>
+        <div class="main-grid">
+            <div class="card">
+                <h2>Birth Details</h2>
+                <form id="birthForm" onsubmit="generateChart(event)" autocomplete="off">
+                    <div style="padding:1em;background:linear-gradient(135deg,#ecf0f1 0%,#bdc3c7 100%);border-left:4px solid #27ae60;border-radius:8px;margin:0 0 1.4em 0;color:#2c3e50;font-size:0.95em;">
+                        🔒 <strong>Privacy First:</strong> We do not capture or store your personal details. Your analysis is completely anonymous.
+                    </div>
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label>Birth Date</label>
+                            <input type="date" id="birthDate" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Birth Time</label>
+                            <input type="time" id="birthTime" required autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group" style="position:relative;">
+                        <label>Place of Birth</label>
+                        <input type="text" id="birthPlace" required placeholder="Start typing city name..."
+                               oninput="searchPlace(event)" autocomplete="off">
+                        <div id="placeResults"></div>
+                    </div>
+                    <button type="submit" class="btn">Generate Chart</button>
+                </form>
+                <div class="error" id="errorDisplay"></div>
+            </div>
+
+            <div class="card">
+                <div id="chartDisplay" style="margin-bottom:1rem;">
+                    <div style="color:var(--text-secondary);text-align:center;padding:2.5rem 1rem;">
+                        Chart data will appear here...
+                    </div>
+                </div>
+                <button class="btn" onclick="analyzeChart()" id="analyzeBtn" disabled style="width:100%;">
+                    What Cosmos Says
+                </button>
+            </div>
+        </div>
+
+        <!-- 3 analysis sections only — Next 5 Years removed -->
+        <div id="cosmicSection" style="display:none;"></div>
+
+        <!-- Ask the Cosmos bubble chat -->
+        <div id="chatSection" style="display:none;">
+            <div class="card">
+                <div class="chat-header">
+                    <div class="chat-header-title">🔮 Ask the Cosmos</div>
+                    <div class="chat-header-sub">Pick a topic, tap a question, or type your own below</div>
+                </div>
+
+                <div class="chat-categories">
+                    <button class="cat-tab active" onclick="selectCategory(0,this)">❤️ Health &amp; Vitality</button>
+                    <button class="cat-tab" onclick="selectCategory(1,this)">💼 Job &amp; Career</button>
+                    <button class="cat-tab" onclick="selectCategory(2,this)">💰 Finance &amp; Wealth</button>
+                    <button class="cat-tab" onclick="selectCategory(3,this)">👶 Kids &amp; Parenting</button>
+                    <button class="cat-tab" onclick="selectCategory(4,this)">🏠 Property &amp; Vehicles</button>
+                    <button class="cat-tab" onclick="selectCategory(5,this)">🤝 Partnership</button>
+                    <button class="cat-tab" onclick="selectCategory(6,this)">✨ Soul &amp; Fulfilment</button>
+                </div>
+
+                <div class="bubble-row" id="bubbleRow"></div>
+
+                <div id="chatMessages">
+                    <div class="chat-bubble-ai">
+                        <span class="ai-label">Soul Nakshatra</span>
+                        Namaste 🙏 Your Vedic chart is ready. Pick a category above, tap a question bubble, or type your own question — I will answer based on your exact planetary placements, dasha cycle, and bindu scores.
+                    </div>
+                </div>
+
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Or type your own question about your chart…"
+                           onkeydown="if(event.key==='Enter') sendChatMessage()">
+                    <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" title="Send">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </button>
+                </div>
+                <div style="text-align:center;margin-top:0.75rem;">
+                    <button onclick="endSession();startSession();"
+                        style="background:none;border:none;color:#bbb;font-size:0.75rem;
+                        cursor:pointer;text-decoration:underline;font-family:Inter,sans-serif;">
+                        Save my session
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>Soul Nakshatra · Connecting Your Soul with the Stars</p>
+    </footer>
+</div>
+
+<script>
+console.log('[Init] Script block started');
+/* ── CONFIG ── */
+var BACKEND_URL = 'https://ashvini-ito--soul-nakshatra-flask-app.modal.run';
+console.log('[Init] BACKEND_URL:', BACKEND_URL);
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT CATEGORIES  (exact questions from spec)
+═══════════════════════════════════════════════════════════ */
+var CHAT_CATEGORIES = [
+    {
+        name: 'Health & Vitality',
+        task: 'Perform a Deep Vitality Audit using Framework v4.4. Identify if the current Dasha involves the 8th Lord or a planet in the 8th House. Analyze Saturn transit over Lagna or Natal Moon. Compare 1st house strength D1 vs D9. Use Ascendant and Moon Nakshatras for metabolic temperament. Map SAV Bindus for 1st vs 6th House. Give 12-month and 3-year health outlook.',
+        bubbles: [
+            'How is my overall vitality and energy?',
+            'What are my physical pressure points?',
+            'Health roadmap: Next 12 months vs. 3 years.'
+        ]
+    },
+    {
+        name: 'Job & Career',
+        task: 'Conduct a Divisional Career Audit using Framework v4.4. Analyze 10th House and Lord in D1 and D10. Check Nakshatra of 10th Lord for professional vibration. Reconcile 8th House Dasha stress with 10th House Bindu score. Identify Jupiter or Saturn transits hitting D10 Lagna or 10th House.',
+        bubbles: [
+            'Is a job or boss change likely soon?',
+            'Why is my current work feeling so stressful?',
+            'Will I get a promotion or more authority this year?'
+        ]
+    },
+    {
+        name: 'Finance & Wealth',
+        task: 'Execute a Financial Reservoir Analysis using Framework v4.4. Compare 11th House (Gains) SAV Bindus vs 2nd House (Accumulation). Check 2nd and 11th lords in D9 for lasting fruit. Identify Leak Points (low Bindus) and Fortune Reservoirs (30+). Analyze wealth Nakshatras for investment style.',
+        bubbles: [
+            "Where are my financial 'leaks'?",
+            'When will my income peak in the next 3 years?',
+            'Where should I invest my money based on my chart?'
+        ]
+    },
+    {
+        name: 'Kids & Parenting',
+        task: 'Perform a Child and Legacy Audit using Framework v4.4. Analyze 5th House Lord and occupants in D1. Use D9 5th house for inner drive. Use Mercury Nakshatra for learning style. Check 5th House SAV Bindus. Analyze 9th House Lord relationship to 5th House Lord for parental bond.',
+        bubbles: [
+            "What is my child's core temperament and natural potential?",
+            "Which educational path best suits my child's talents?",
+            'How can I improve my connection and bond with my child?'
+        ]
+    },
+    {
+        name: 'Property & Vehicles',
+        task: 'Analyze Property 4th House and Vehicle Venus Yogas using Framework v4.4. Check if current Antardasha lord is 4th Lord or aspecting 4th house. Verify 4th lord in Navamsa. Look for Mars activation (Property) and Venus activation (Vehicles). Identify Golden Window when Jupiter aspects natal 4th house.',
+        bubbles: [
+            'When is the best time for me to buy property?',
+            'Do I have yogas for a new vehicle in the next 3 years?',
+            'Should I invest in real estate right now?'
+        ]
+    },
+    {
+        name: 'Partnership & Social Harmony',
+        task: 'Perform a Partnership Audit using Framework v4.4. Analyze 7th House Lord and occupants in D1. Use D9 7th house and Venus for soul-level harmony. Check 7th Lord Nakshatra for communication style. Identify Saturn stress and Jupiter blessings on 7th. Give best Harmony Window in next 12 months.',
+        bubbles: [
+            'What is the current energy of my relationships?',
+            'Is this a good year for new partnerships?',
+            'How can I improve harmony with my spouse/partner?'
+        ]
+    },
+    {
+        name: 'Soul Desires & Deep Fulfilment',
+        task: 'Analyze the Internal Fulfilment Blueprint using Framework v4.4. 1. ATMAKARAKA FIRST: The Atmakaraka is the soul indicator — the planet with the highest degree. Identify it from the ATMAKARAKA section in the chart data, explain what it means for this persons deepest desires, and find where it sits in the soul chart for true hunger. 2. Analyze the 4th House for peace and emotional security. 3. Apply strength scores — 30+ means happiness in stability, under 25 means happiness requires letting go and detachment. 4. Deep dive into Moon sign and birth star for emotional nature. 5. Provide a clear list: 3 things to STOP and 3 things to START to feel aligned.',
+        bubbles: [
+            'What does my soul actually crave for?',
+            'What will bring me true mental peace?',
+            "What is my 'Happiness Archetype'?"
+        ]
+    }
+];
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════ */
+var chartData         = null;
+var selectedLocation  = null;
+var searchTimeout     = null;
+var chatHistory       = [];
+var activeCategoryIdx = 0;
+var bubbleCounter     = 0;
+
+// Session tracking
+var currentSessionId        = '';
+var sessionQuestions        = [];
+var sessionChartGenerated   = false;
+var sessionAnalysisProvided = false;
+var sessionBirthDate        = '';
+var sessionBirthPlace       = '';
+var sessionStartTime        = null;
+
+/* ═══════════════════════════════════════════════════════════
+   PLACE SEARCH
+═══════════════════════════════════════════════════════════ */
+function searchPlace(event) {
+    var query = event.target.value;
+    var resultsDiv = document.getElementById('placeResults');
+    if (query.length < 3) { resultsDiv.style.display = 'none'; return; }
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5', { headers: { 'User-Agent': 'SoulNakshatra' } })
+            .then(function(r) { return r.json(); })
+            .then(function(places) {
+                if (places.length > 0) {
+                    resultsDiv.innerHTML = places.map(function(p) {
+                        return '<div class="place-item" onclick=\'selectPlace(' + JSON.stringify({ name: p.display_name, lat: p.lat, lon: p.lon }).replace(/'/g, '&#39;') + ')\'>' + p.display_name + '</div>';
+                    }).join('');
+                    resultsDiv.style.display = 'block';
+                }
+            })
+            .catch(function(e) { console.error('Place search error:', e); });
+    }, 500);
+}
+
+function selectPlace(location) {
+    var tz = Math.round(location.lon / 15 * 2) / 2;
+    if (location.lon >= 68 && location.lon <= 97 && location.lat >= 8 && location.lat <= 35) tz = 5.5;
+    selectedLocation = { name: location.name, latitude: parseFloat(location.lat), longitude: parseFloat(location.lon), timezone: tz };
+    document.getElementById('birthPlace').value = location.name;
+    document.getElementById('placeResults').style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#birthPlace')) document.getElementById('placeResults').style.display = 'none';
+});
+
+/* ═══════════════════════════════════════════════════════════
+   CHART GENERATION
+═══════════════════════════════════════════════════════════ */
+function extractPlanetHousePositions(planets, houses) {
+    if (!planets || !houses) return null;
+    var houseData = {};
+    for (var i = 1; i <= 12; i++) houseData['House_' + i] = { house_number: i, planets: [], house_lord: null, rasi: null };
+    planets.forEach(function(planet) {
+        if (planet.house) {
+            houseData['House_' + planet.house].planets.push({
+                name: planet.name,
+                full_name: planet.full_name || planet.name,
+                rasi: planet.rasi ? planet.rasi.name : 'Unknown',
+                nakshatra: planet.nakshatra ? planet.nakshatra.name : 'Unknown',
+                degree: planet.position ? planet.position.degree : 0,
+                is_retrograde: planet.is_retrograde || false
+            });
+        }
+    });
+    houses.forEach(function(house, i) {
+        if (house.rasi && house.rasi.lord && house.rasi.lord.name) {
+            houseData['House_' + (i + 1)].house_lord = house.rasi.lord.name;
+            houseData['House_' + (i + 1)].rasi = house.rasi.name;
+        }
+    });
+    return houseData;
+}
+
+function generateChart(event) {
+    event.preventDefault();
+    if (!selectedLocation) { showError('Please select a place from the dropdown'); return; }
+
+    var chartDisplay = document.getElementById('chartDisplay');
+    chartDisplay.innerHTML = '<div class="loading"><div class="spinner"></div> Generating your chart...</div>';
+
+    var date = document.getElementById('birthDate').value.trim();
+    var time = document.getElementById('birthTime').value.trim();
+
+    fetch(BACKEND_URL + '/api/generate-chart-pyjhora', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: date, time: time, latitude: selectedLocation.latitude, longitude: selectedLocation.longitude, timezone: selectedLocation.timezone })
+    })
+    .then(function(res) {
+        if (!res.ok) return res.json().then(function(e) { throw new Error(e.message || 'Server error'); });
+        return res.json();
+    })
+    .then(function(data) {
+        chartData = data;
+        var dasha = data.data && data.data.dasha ? data.data.dasha : null;
+        var cd    = dasha ? dasha.current_dasha : null;
+        window.aiAnalysisData = {
+            ascendant:           data.data ? data.data.ascendant : null,
+            nakshatra_details:   data.data ? data.data.nakshatra_details : null,
+            planets_in_houses:   extractPlanetHousePositions(data.data ? data.data.planets : null, data.data ? data.data.houses : null),
+            current_dasha:       cd,
+            dasha_cycle:         dasha ? dasha.cycle : null,
+            ashtakavarga_bindus: data.data && data.data.ashtakavarga && data.data.ashtakavarga.sarvashtakavarga ? data.data.ashtakavarga.sarvashtakavarga.house_wise : null,
+            current_transits:    data.data ? data.data.transits : null,
+            d9_navamsa:          data.data && data.data.divisional_charts ? data.data.divisional_charts.D9 : null,
+            d10_dasamsa:         data.data && data.data.divisional_charts ? data.data.divisional_charts.D10 : null,
+            career_analysis:     data.data ? data.data.career_analysis : null,
+            pratyantar_dashas:   dasha ? dasha.pratyantar_dashas : null,
+            current_pratyantar:       cd && cd.pratyantar ? {
+                planet:        cd.pratyantar,
+                start:         cd.pratyantar_start,
+                end:           cd.pratyantar_end,
+                duration_days: cd.pratyantar_duration_days
+            } : null,
+            property_transit_history: (data.data && data.data.property_transit_history) ? data.data.property_transit_history : null,
+            stress_transit_history:   (data.data && data.data.stress_transit_history)   ? data.data.stress_transit_history   : null
+        };
+        chartDisplay.innerHTML =
+            '<div style="text-align:center;padding:1.75rem 1rem;">' +
+            '<div style="font-size:2rem;margin-bottom:0.75rem;">✨</div>' +
+            '<div style="font-weight:600;color:var(--accent-primary);margin-bottom:0.4rem;">Chart Generated Successfully</div>' +
+            '<div style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:0.25rem;">' + date + ' at ' + time + '</div>' +
+            '<div style="color:var(--text-secondary);font-size:0.82rem;">' + selectedLocation.name.split(',').slice(0, 2).join(',') + '</div>' +
+            '</div>';
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('cosmicSection').style.display = 'none';
+        document.getElementById('chatSection').style.display = 'none';
+
+        sessionBirthDate      = date;
+        sessionBirthPlace     = selectedLocation ? selectedLocation.name.split(',')[0] : '';
+        sessionChartGenerated = true;
+        sendSessionEvent({ event: 'chart_generated', birth_date: sessionBirthDate, birth_place: sessionBirthPlace });
+    })
+    .catch(function(error) {
+        chartDisplay.innerHTML = '<div style="color:#dc2626;text-align:center;padding:2rem;">Error generating chart. Check the server is running.</div>';
+        showError('Error: ' + error.message);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANALYZE CHART
+═══════════════════════════════════════════════════════════ */
+function analyzeChart() {
+    if (!chartData) { showError('Please generate a chart first'); return; }
+
+    var btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Consulting the cosmos…';
+
+    var date     = document.getElementById('birthDate').value;
+    var time     = document.getElementById('birthTime').value;
+    var d        = window.aiAnalysisData || {};
+    var cosmicEl = document.getElementById('cosmicSection');
+
+    cosmicEl.style.display = 'block';
+    cosmicEl.innerHTML =
+        '<div class="cosmic-loading">' +
+        '<div class="big-spinner"></div>' +
+        '<div class="cosmic-loading-title">Reading the cosmic blueprint…</div>' +
+        '<div class="cosmic-loading-sub">Analysing your chart in one deep reading</div>' +
+        '</div>';
+
+    fetch(BACKEND_URL + '/api/analyze-chart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chartData: {
+                date: date, time: time,
+                place: selectedLocation ? selectedLocation.name : 'Unknown',
+                ascendant: d.ascendant,
+                moon_sign: chartData && chartData.data && chartData.data.nakshatra_details && chartData.data.nakshatra_details.chandra_rasi ? chartData.data.nakshatra_details.chandra_rasi.name : null,
+                moon_nakshatra: chartData && chartData.data && chartData.data.nakshatra_details && chartData.data.nakshatra_details.nakshatra ? chartData.data.nakshatra_details.nakshatra.name : null,
+                planets: chartData && chartData.data ? chartData.data.planets : [],
+                houses: chartData && chartData.data ? chartData.data.houses : [],
+                current_dasha: d.current_dasha,
+                ashtakavarga: d.ashtakavarga_bindus,
+                d10_dasamsa: d.d10_dasamsa,
+                career_analysis: d.career_analysis
+            }
+        })
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        return res.text();
+    })
+    .then(function(responseText) {
+        var raw;
+        try {
+            var json = JSON.parse(responseText);
+            raw = (json.choices && json.choices[0] && json.choices[0].message ? json.choices[0].message.content : null) || json.analysis || json.text || json.content;
+        } catch(ex) { raw = responseText; }
+        if (!raw) throw new Error('Empty response from AI');
+
+        displayAIAnalysis(raw);
+        sessionAnalysisProvided = true;
+        if (currentSessionId) {
+            sendSessionEvent({ event: 'analysis_provided' });
+        } else {
+            setTimeout(function() {
+                sendSessionEvent({ event: 'analysis_provided' });
+            }, 3000);
+        }
+        btn.textContent = 'Analysis Ready ✓';
+        btn.classList.add('btn-success');
+
+        setTimeout(function() { showChatSection(); }, 600);
+    })
+    .catch(function(err) {
+        console.error('Analysis error:', err);
+        cosmicEl.innerHTML = '<div class="card" style="text-align:center;padding:2rem;color:#dc2626;">Error: ' + err.message + '<br><br><button class="btn" onclick="analyzeChart()" style="margin-top:0.75rem;">Retry</button></div>';
+        btn.disabled = false;
+        btn.textContent = 'What Cosmos Says';
+        showError('Error: ' + err.message);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DISPLAY — 3 SECTIONS ONLY (Next 5 Years removed)
+═══════════════════════════════════════════════════════════ */
+function displayAIAnalysis(responseText) {
+    var cosmicEl = document.getElementById('cosmicSection');
+    var sections = parseAnalysisSections(responseText);
+
+    var html = '<div id="analysis-content">';
+    html += '<div class="personality-section"><h1>🎭 PERSONALITY</h1><div class="personality-body">' + formatText(sections.personality || responseText.substring(0, 800)) + '</div></div>';
+    html += '<div class="major-events-section"><h1>🔍 MAJOR EVENTS - LAST 7 YEARS</h1>' + formatText(sections.majorEvents) + '</div>';
+    html += '<div class="current-cycle-section"><h1>⚡ CURRENT CYCLE &amp; FOCUS</h1>' + formatText(sections.currentCycle) + '</div>';
+    html += '</div>';
+
+    cosmicEl.innerHTML = html;
+    cosmicEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function parseAnalysisSections(text) {
+    if (!text) return {};
+    var sections = {};
+    var pMatch = text.match(/# 🎭 PERSONALITY[^\n]*\n([\s\S]*?)(?=# 🔍 MAJOR EVENTS|$)/);
+    sections.personality = pMatch ? pMatch[1].trim() : '';
+    var eMatch = text.match(/# 🔍 MAJOR EVENTS[^\n]*\n([\s\S]*?)(?=# ⚡ CURRENT CYCLE|$)/);
+    sections.majorEvents = eMatch ? eMatch[1].trim() : '';
+    var cMatch = text.match(/# ⚡ CURRENT CYCLE[^\n]*\n([\s\S]*?)(?=# 🔮 THE NEXT|$)/);
+    sections.currentCycle = cMatch ? cMatch[1].trim() : '';
+    return sections;
+}
+
+function formatText(text) {
+    if (!text) return '';
+    var out = text
+        .replace(/\*\*Career Field Indication:\*\*([\s\S]*?)(?=\n\n(?![-*•])|$)/gi, function(m) { return '<div class="career-field-box">' + m.trim() + '</div>\n'; })
+        .replace(/## Event \d+:[^\n]*\n[\s\S]*?(?=## Event \d+:|$)/g, function(m) { return '<div class="event-card">' + m.trim() + '</div>\n'; })
+        .replace(/## (?:💪|💑|💼|💰|🏠|✈️)[^\n]*\n[\s\S]*?(?=## (?:💪|💑|💼|💰|🏠|✈️)|$)/g, function(m) { return '<div class="life-area-card">' + m.trim() + '</div>\n'; })
+        .replace(/^## (.*)$/gim, '<h2>$1</h2>')
+        .replace(/^### (.*)$/gim, '<h3>$1</h3>')
+        .replace(/\*\*Priority \d+:[\s\S]*?(?=\*\*Priority \d+:|$)/g, function(m) { return '<div class="priority-item">' + m.trim() + '</div>\n'; })
+        .replace(/1\.\s*STRESS\s*&\s*HEALTH\s*PERIOD[^\n]*/gi, '<div class="event-label stress-label">🔴 STRESS &amp; HEALTH</div>')
+        .replace(/2\.\s*GAINS\s*&\s*GROWTH\s*PERIOD[^\n]*/gi, '<div class="event-label gains-label">🟢 GAINS &amp; GROWTH</div>')
+        .replace(/3\.\s*PROPERTY\s*&\s*ASSETS[^\n]*/gi, '<div class="event-label property-label">🏠 PROPERTY &amp; ASSETS</div>')
+        .replace(/4\.\s*RELATIONSHIPS[^\n]*/gi, '<div class="event-label relationship-label">💑 RELATIONSHIPS</div>')
+        .replace(/\((\d+(?:[–-]\d+)?%\s+match)\)/gi, '(<span class="career-match">$1</span>)')
+        .replace(/\*\*Confidence:\*\*\s*(\d+%)/g, '<strong>Confidence:</strong> <span class="confidence-badge">$1</span>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n+/g, '</p><p style="margin:0.8em 0;">')
+        .replace(/\n/g, '<br>');
+    return '<p>' + out + '</p>';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT — INIT & CATEGORY TABS
+═══════════════════════════════════════════════════════════ */
+function showChatSection() {
+    var el = document.getElementById('chatSection');
+    el.style.display = 'block';
+    activeCategoryIdx = 0;
+    document.querySelectorAll('.cat-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+    renderBubbles(0);
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function selectCategory(idx, btn) {
+    activeCategoryIdx = idx;
+    document.querySelectorAll('.cat-tab').forEach(function(t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    renderBubbles(idx);
+}
+
+function renderBubbles(idx) {
+    var row = document.getElementById('bubbleRow');
+    var cat = CHAT_CATEGORIES[idx];
+    if (!cat || !row) return;
+    row.innerHTML = '';
+    cat.bubbles.forEach(function(text, i) {
+        var btn = document.createElement('button');
+        btn.className = 'bubble-chip';
+        btn.textContent = text;
+        btn.setAttribute('data-cat', idx);
+        btn.setAttribute('data-idx', i);
+        btn.onclick = function() { sendBubble(idx, i); };
+        row.appendChild(btn);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT — SYSTEM PROMPT BUILDER
+═══════════════════════════════════════════════════════════ */
+function buildSystemPrompt(categoryIdx) {
+    var d   = window.aiAnalysisData || {};
+    var cat = CHAT_CATEGORIES[categoryIdx];
+
+    // SAV scores — keyed as House_1 … House_12
+    var sav = {};
+    if (d.ashtakavarga_bindus) {
+        d.ashtakavarga_bindus.forEach(function(h) { sav['House_' + h.house] = h.points; });
+    }
+
+    // Planets list — explicit lines Gemini can parse
+    var planetsList = '';
+    if (d.planets_in_houses) {
+        for (var house in d.planets_in_houses) {
+            var h = d.planets_in_houses[house];
+            if (h.planets && h.planets.length > 0) {
+                h.planets.forEach(function(p) {
+                    planetsList += p.name + ' in House ' + h.house_number + ' (' + p.rasi + ')' +
+                        (p.is_retrograde ? ' [Retrograde]' : '') +
+                        ' | Nakshatra: ' + p.nakshatra + '\n';
+                });
+            }
+        }
+    }
+    if (!planetsList) planetsList = 'Not available';
+
+    // Transits — explicit per-planet (rasi is a plain string from Python, not an object)
+    console.log('[Transits in prompt]', d.current_transits ? JSON.stringify(d.current_transits).substring(0,300) : 'NULL');
+    var saturnTransit     = 'Not available';
+    var jupiterTransit    = 'Not available';
+    var rahuTransit       = 'Not available';
+    var ketuTransit       = 'Not available';
+    var otherTransits     = [];
+    var saturnCurrentSign = '';   // plain sign name — used for Sade Sati calculation below
+    if (d.current_transits && d.current_transits.planets) {
+        d.current_transits.planets.forEach(function(p) {
+            var name  = p.name || '';
+            var sign  = p.rasi || p.sign || '?';
+            var house = p.house || '?';
+            var retro = p.is_retrograde ? ' [Retrograde]' : '';
+            var str   = name + ' in ' + sign + ' (House ' + house + ')' + retro;
+            if (name === 'Saturn') {
+                saturnTransit     = str;
+                saturnCurrentSign = sign;
+            } else if (name === 'Jupiter') {
+                jupiterTransit = str;
+            } else if (name === 'Rahu') {
+                rahuTransit = str + ' [always moves retrograde]';
+            } else if (name === 'Ketu') {
+                ketuTransit = str + ' [always moves retrograde, opposite Rahu]';
+            } else {
+                otherTransits.push(str);
+            }
+        });
+    }
+
+    // Ascendant / Lagna
+    var lagnaStr = 'Unknown';
+    if (d.ascendant) {
+        var rasi = d.ascendant.rasi ? d.ascendant.rasi.name : (d.ascendant.sign ? d.ascendant.sign.name : '?');
+        var deg  = d.ascendant.degree ? parseFloat(d.ascendant.degree).toFixed(2) : '?';
+        lagnaStr = rasi + ' at ' + deg + ' degrees';
+    }
+
+    // Moon
+    var moonSign  = d.nakshatra_details && d.nakshatra_details.chandra_rasi ? d.nakshatra_details.chandra_rasi.name : 'Unknown';
+    var moonNak   = d.nakshatra_details && d.nakshatra_details.nakshatra    ? d.nakshatra_details.nakshatra.name    : 'Unknown';
+
+    // Mahadasha / Antardasha
+    var dashaStr = 'Not available';
+    if (d.current_dasha && d.current_dasha.maha_dasha) {
+        var md = d.current_dasha.maha_dasha;
+        var activeAD = 'Not identified';
+        if (d.current_dasha.antar_dashas) {
+            var now = new Date();
+            d.current_dasha.antar_dashas.forEach(function(ad) {
+                if (new Date(ad.start) <= now && now <= new Date(ad.end)) {
+                    activeAD = ad.planet + ' (' + ad.start + ' to ' + ad.end + ')';
+                }
+            });
+        }
+        dashaStr = 'Mahadasha: ' + md.planet + ' (' + md.start_date + ' to ' + md.end_date + ')' +
+                   ' | Active Antardasha: ' + activeAD;
+    }
+
+    // Pratyantar Dasha
+    var pratyantarStr = 'Not calculated';
+    if (d.current_pratyantar && d.current_pratyantar.planet) {
+        pratyantarStr = 'Pratyantar Lord: ' + d.current_pratyantar.planet +
+            ' | Period: ' + (d.current_pratyantar.start || '?') +
+            ' to ' + (d.current_pratyantar.end || '?') +
+            ' (' + (d.current_pratyantar.duration_days || '?') + ' days)';
+    }
+
+    // ── STRESS TRIGGER CALCULATIONS ──
+
+    // Extract period lords with correct field paths
+    var dashaLord = (d.current_dasha && d.current_dasha.maha_dasha) ? (d.current_dasha.maha_dasha.planet || '') : '';
+    var antarLord = '';
+    if (d.current_dasha && d.current_dasha.antar_dashas) {
+        var nowForAD = new Date();
+        d.current_dasha.antar_dashas.forEach(function(ad) {
+            if (new Date(ad.start) <= nowForAD && nowForAD <= new Date(ad.end)) {
+                antarLord = ad.planet || '';
+            }
+        });
+    }
+    var pratyLord = d.current_pratyantar ? (d.current_pratyantar.planet || '') : '';
+
+    // 1. Find 8th house lord and occupants
+    var eighthHouseLord      = 'Unknown';
+    var eighthHouseOccupants = [];
+    if (d.planets_in_houses) {
+        var h8 = d.planets_in_houses['House_8'];
+        if (h8) {
+            eighthHouseLord      = h8.house_lord || 'Unknown';
+            eighthHouseOccupants = h8.planets ? h8.planets.map(function(p) { return p.name; }) : [];
+        }
+    }
+
+    // 2. Check if current periods involve 8th lord or 8th house occupants
+    var eighth8Active = [];
+    if (dashaLord && (dashaLord === eighthHouseLord || eighthHouseOccupants.indexOf(dashaLord) !== -1)) {
+        eighth8Active.push('Major period lord (' + dashaLord + ') is connected to 8th house');
+    }
+    if (antarLord && (antarLord === eighthHouseLord || eighthHouseOccupants.indexOf(antarLord) !== -1)) {
+        eighth8Active.push('Sub-period lord (' + antarLord + ') is connected to 8th house');
+    }
+    if (pratyLord && (pratyLord === eighthHouseLord || eighthHouseOccupants.indexOf(pratyLord) !== -1)) {
+        eighth8Active.push('Micro-period lord (' + pratyLord + ') is connected to 8th house');
+    }
+
+    // 3. Ketu in current periods + sensitive natal houses
+    var ketuActive = [];
+    if (dashaLord === 'Ketu') ketuActive.push('Major period is Ketu');
+    if (antarLord === 'Ketu') ketuActive.push('Sub-period is Ketu');
+    if (pratyLord === 'Ketu') ketuActive.push('Micro-period is Ketu');
+
+    var ketuSensitiveHouses = [];
+    ['House_1','House_4','House_5','House_8','House_12'].forEach(function(hk) {
+        if (d.planets_in_houses && d.planets_in_houses[hk]) {
+            (d.planets_in_houses[hk].planets || []).forEach(function(p) {
+                if (p.name === 'Ketu') {
+                    ketuSensitiveHouses.push('Ketu is natally in ' + hk.replace('_',' ') + ' (sensitive placement)');
+                }
+            });
+        }
+    });
+
+    // 4. Sade Sati — Saturn transiting 12th, 1st, or 2nd from Moon sign
+    var sadeSatiStatus = 'Not active';
+    var moonSignForSS  = d.nakshatra_details && d.nakshatra_details.chandra_rasi ? d.nakshatra_details.chandra_rasi.name : '';
+    var signOrder      = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    if (moonSignForSS && saturnCurrentSign) {
+        var moonIdx = signOrder.indexOf(moonSignForSS);
+        if (moonIdx !== -1) {
+            var sadeSatiSigns = [
+                signOrder[(moonIdx + 11) % 12],
+                signOrder[moonIdx],
+                signOrder[(moonIdx + 1)  % 12]
+            ];
+            if (sadeSatiSigns.indexOf(saturnCurrentSign) !== -1) {
+                var ssPhase = '';
+                if (saturnCurrentSign === sadeSatiSigns[0]) ssPhase = 'Rising phase (12th from Moon) — preparing and letting go';
+                if (saturnCurrentSign === sadeSatiSigns[1]) ssPhase = 'Peak phase (on Moon sign) — most intense pressure';
+                if (saturnCurrentSign === sadeSatiSigns[2]) ssPhase = 'Ending phase (2nd from Moon) — rebuilding and stabilising';
+                sadeSatiStatus = 'ACTIVE — Saturn in ' + saturnCurrentSign + ' | ' + ssPhase;
+            } else {
+                sadeSatiStatus = 'Not active — Saturn in ' + saturnCurrentSign + ', Moon in ' + moonSignForSS;
+            }
+        }
+    }
+
+    // Saturn on rising sign?
+    var saturnOnRising = 'No';
+    if (saturnCurrentSign && d.ascendant) {
+        var risingSign = d.ascendant.rasi ? d.ascendant.rasi.name : (d.ascendant.sign ? d.ascendant.sign.name : '');
+        if (saturnCurrentSign === risingSign) {
+            saturnOnRising = 'YES — Saturn transiting the rising sign (' + risingSign + ')';
+        }
+    }
+
+    // ── PROPERTY TRIGGER CALCULATIONS ──
+
+    // 4th house lord and occupants
+    var fourthHouseLord     = 'Unknown';
+    var fourthHousePlanets  = [];
+    if (d.planets_in_houses && d.planets_in_houses['House_4']) {
+        var h4 = d.planets_in_houses['House_4'];
+        fourthHouseLord    = h4.house_lord || 'Unknown';
+        fourthHousePlanets = h4.planets ? h4.planets.map(function(p) { return p.name; }) : [];
+    }
+
+    // Check if current/recent Dasha lords activate 4th house
+    var propertyDashaActivations = [];
+    [
+        ['Major period', dashaLord],
+        ['Sub-period',   antarLord],
+        ['Micro-period', pratyLord]
+    ].forEach(function(pair) {
+        var periodName = pair[0]; var lord = pair[1];
+        if (!lord) return;
+        if (lord === fourthHouseLord) {
+            propertyDashaActivations.push(periodName + ' lord (' + lord + ') is the 4th house lord — strong property period activation');
+        }
+        if (fourthHousePlanets.indexOf(lord) !== -1) {
+            propertyDashaActivations.push(periodName + ' lord (' + lord + ') sits in the 4th house — property matters activated');
+        }
+    });
+    var propertyDashaStr = propertyDashaActivations.length > 0
+        ? propertyDashaActivations.join('\n  ')
+        : 'No current Dasha activation of 4th house';
+
+    // Build property transit history string
+    var propertyHistoryStr = 'Not available';
+    if (d.property_transit_history && d.property_transit_history.length > 0) {
+        propertyHistoryStr = d.property_transit_history.map(function(y) {
+            var parts = [y.year + ':'];
+            parts.push('Saturn H' + (y.saturn_house || '?') + (y.saturn_aspects_4th ? ' (aspects 4th)' : ''));
+            parts.push('Jupiter H' + (y.jupiter_house || '?') + (y.jupiter_aspects_4th ? ' (aspects 4th)' : ''));
+            parts.push('Mars H' + (y.mars_house || '?') + (y.mars_aspects_4th ? ' (aspects 4th)' : ''));
+            var activation = y.property_activation && y.property_activation !== 'None' ? y.property_activation : '';
+            if (activation) { parts.push('\u2190 ' + activation); }
+            return parts.join(' | ');
+        }).join('\n  ');
+    }
+
+    // Build stress transit history string
+    var stressHistoryStr = 'Not available';
+    if (d.stress_transit_history && d.stress_transit_history.length > 0) {
+        stressHistoryStr = d.stress_transit_history.map(function(y) {
+            var level = y.stress_level || 'LOW';
+            var flags = (y.stress_flags && y.stress_flags.length > 0) ? y.stress_flags.join('; ') : 'No major stress indicators';
+            return y.year + ' [' + level + ']: ' + flags;
+        }).join('\n  ');
+    }
+    var stressTriggers =
+        '8th House Lord: ' + eighthHouseLord + '\n' +
+        '8th House Occupants: ' + (eighthHouseOccupants.length > 0 ? eighthHouseOccupants.join(', ') : 'None') + '\n' +
+        '8th House Active in Current Periods: ' + (eighth8Active.length > 0 ? eighth8Active.join('; ') : 'No') + '\n' +
+        'Ketu in Current Periods: ' + (ketuActive.length > 0 ? ketuActive.join('; ') : 'No') + '\n' +
+        'Ketu Sensitive Natal House Placements: ' + (ketuSensitiveHouses.length > 0 ? ketuSensitiveHouses.join('; ') : 'None') + '\n' +
+        'Sade Sati (7.5-year Saturn pressure cycle): ' + sadeSatiStatus + '\n' +
+        'Saturn on Rising Sign: ' + saturnOnRising + '\n';
+
+    // D9 Navamsa — robust builder handles both planets-array and house-keyed structures
+    console.log('[D9 in prompt]', d.d9_navamsa ? JSON.stringify(d.d9_navamsa).substring(0,200) : 'NULL');
+    var d9str = 'Not available';
+    if (d.d9_navamsa) {
+        var d9planets = [];
+        if (d.d9_navamsa.planets && Array.isArray(d.d9_navamsa.planets)) {
+            d.d9_navamsa.planets.forEach(function(p) {
+                var sign = p.sign || (p.rasi ? (p.rasi.name || p.rasi) : '?');
+                d9planets.push(p.name + ' in ' + sign + ' (lord: ' + (p.sign_lord || '?') + ')');
+            });
+        } else if (typeof d.d9_navamsa === 'object') {
+            for (var key in d.d9_navamsa) {
+                if (d.d9_navamsa[key] && d.d9_navamsa[key].planets) {
+                    d.d9_navamsa[key].planets.forEach(function(p) {
+                        d9planets.push((p.name || p) + ' in house ' + key);
+                    });
+                }
+            }
+        }
+        d9str = d9planets.length > 0
+            ? d9planets.join(' | ')
+            : JSON.stringify(d.d9_navamsa).substring(0, 300);
+    }
+
+    // Atmakaraka — planet with highest degree within its sign (excludes Rahu and Ketu)
+    var atmakaraka       = 'Unknown';
+    var atmakarakaSign   = '';
+    var atmakarakaD9Sign = '';
+    var highestDegree    = -1;
+    var akEligible       = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn'];
+    if (d.planets_in_houses) {
+        for (var hkey in d.planets_in_houses) {
+            var hobj = d.planets_in_houses[hkey];
+            if (hobj && hobj.planets) {
+                hobj.planets.forEach(function(p) {
+                    if (akEligible.indexOf(p.name) !== -1) {
+                        var deg = parseFloat(p.degree) || 0;
+                        if (deg > highestDegree) {
+                            highestDegree    = deg;
+                            atmakaraka       = p.name;
+                            atmakarakaSign   = p.rasi || '';
+                        }
+                    }
+                });
+            }
+        }
+    }
+    if (d.d9_navamsa && atmakaraka !== 'Unknown') {
+        if (d.d9_navamsa.planets && Array.isArray(d.d9_navamsa.planets)) {
+            d.d9_navamsa.planets.forEach(function(p) {
+                if (p.name === atmakaraka) {
+                    atmakarakaD9Sign = p.sign || (p.rasi ? (p.rasi.name || p.rasi) : '');
+                }
+            });
+        }
+    }
+    var atmakarakaStr = atmakaraka !== 'Unknown'
+        ? atmakaraka + ' (degree: ' + highestDegree.toFixed(2) + ')' +
+          (atmakarakaSign ? ' in ' + atmakarakaSign : '') +
+          (atmakarakaD9Sign ? ' | Soul chart position: ' + atmakarakaD9Sign : '')
+        : 'Not calculated';
+
+    // D10 Dasamsa
+    var d10str = 'Not available';
+    if (d.d10_dasamsa && d.d10_dasamsa.planets) {
+        d10str = d.d10_dasamsa.planets.map(function(p) {
+            return p.name + ' in ' + (p.sign || '?') + ' (lord: ' + (p.sign_lord || '?') + ')';
+        }).join(' | ');
+    }
+
+    var systemPrompt =
+        'You are the Soul Nakshatra Analysis Engine v4.4, a Senior Vedic Strategist.\n\n' +
+
+        'RULES:\n' +
+        '- You have the complete chart data below. Never say data is missing.\n' +
+        '- Never add a Limitations section or say you cannot determine something.\n' +
+        '- MAXIMUM 150 words total. Be ruthlessly concise.\n' +
+        '- Write in plain conversational English. No jargon.\n' +
+        '- Do NOT use these words: Dasha, Antardasha, Pratyantar, Nakshatra, Bindu, ' +
+        'Rasi, Lagna, Bhava, Graha, Yoga, Mahadasha, Vimshottari, SAV, D9, D10, ' +
+        'Navamsa, Dasamsa, Atmakaraka, Ashtakavarga, Sarvashtakavarga.\n' +
+        '- Instead use plain equivalents: say "life period" not Dasha, ' +
+        '"birth star" not Nakshatra, "rising sign" not Lagna, ' +
+        '"strength score" not Bindu, "soul chart" not D9, ' +
+        '"career chart" not D10, "sub-period" not Antardasha, ' +
+        '"micro-period" not Pratyantar.\n' +
+        '- Lead with the direct answer in the first sentence.\n' +
+        '- Use 2 to 3 bullet points maximum. No long paragraphs.\n' +
+        '- Do not explain what something is — just say what it means for this person.\n' +
+        '- Do not restate the question.\n' +
+        '- For short-term timing, use the micro-period lord as the primary trigger.\n' +
+        '- Strength scores above 30 = strong area. Below 25 = watch carefully.\n' +
+        '- ALWAYS use all four of these in your analysis when relevant: ' +
+        '(1) current life period timing, (2) strength scores by house, ' +
+        '(3) soul chart for inner nature, (4) current planetary transits.\n' +
+        '- For timing questions always check where Saturn and Jupiter are transiting ' +
+        'relative to the rising sign and Moon sign.\n' +
+        '- Rahu and Ketu ALWAYS move retrograde (reverse through the zodiac). ' +
+        'Never say they move direct. Never say they are moving forward.\n' +
+        '- Saturn transit over rising sign or Moon sign = pressure and discipline period.\n' +
+        '- Jupiter transit over rising sign or Moon sign = expansion and opportunity period.\n' +
+        '- Rahu transit = intensification and new obsessions in that house area.\n' +
+        '- Ketu transit = detachment and letting go in that house area.\n' +
+        '- For Soul and Fulfilment questions, ALWAYS start your response with the ' +
+        'Atmakaraka planet from the ATMAKARAKA section above. State which planet it is, ' +
+        'what it means as a soul desire, and where it sits in the soul chart. ' +
+        'This is the single most important indicator for soul-level analysis.\n' +
+        '- For career field analysis, check IT and technology FIRST. ' +
+        'Indicators for IT: Mercury strong or in 10th house, Rahu in 10th house, ' +
+        'Gemini or Aquarius or Virgo on 10th house cusp, Mercury as 10th lord. ' +
+        'If any IT indicators are present, list IT/Technology as the first career option.\n' +
+        '- STRESS DETECTION RULE: If the user mentions stress, anxiety, depression, ' +
+        'mental pressure, feeling low, overwhelmed, or emotional difficulty — ' +
+        'you MUST check and mention ALL of the following that apply from the STRESS TRIGGERS block:\n' +
+        '  (a) Is the 8th house lord or a planet from the 8th house active in the current major, ' +
+        'sub, or micro period? If yes say: "Your current period activates deep transformation ' +
+        'energy which can feel like pressure."\n' +
+        '  (b) Is Ketu active in any current period or in a sensitive natal house (1,4,5,8,12)? ' +
+        'If yes say: "Ketu influence brings feelings of detachment, purposelessness, and withdrawal."\n' +
+        '  (c) Is Sade Sati active? If yes ALWAYS mention it and name its current phase.\n' +
+        '  (d) Is Saturn transiting the rising sign or Moon sign? ' +
+        'If yes say: "Saturn is moving through a sensitive zone which intensifies life lessons."\n' +
+        '- Even if the user does NOT mention stress but asks about health or the soul category, ' +
+        'proactively check these 4 triggers and mention any that are currently active.\n' +
+        '- Always frame stress triggers as TRANSFORMATION opportunities, not as bad omens.\n' +
+        '- End with one bold sentence: the single most important action to take.\n\n' +
+
+        'ACTIVE TOPIC: ' + cat.name + '\n' +
+        'TASK: ' + cat.task + '\n\n' +
+
+        '=== CHART DATA — USE EXACTLY AS PROVIDED ===\n\n' +
+        'LAGNA (Ascendant): ' + lagnaStr + '\n' +
+        'MOON SIGN: ' + moonSign + '\n' +
+        'MOON NAKSHATRA: ' + moonNak + '\n\n' +
+
+        'ATMAKARAKA (Soul Indicator — planet with highest degree within its sign):\n' +
+        atmakarakaStr + '\n\n' +
+
+        'PLANETS IN HOUSES (D1 — Rashi Chart):\n' + planetsList + '\n' +
+
+        'CURRENT VIMSHOTTARI DASHA:\n' + dashaStr + '\n\n' +
+
+        'PRATYANTAR DASHA (Sub-Sub Period — primary trigger for week-to-month timing):\n' + pratyantarStr + '\n\n' +
+
+        'STRESS & MENTAL PRESSURE TRIGGERS (pre-calculated — use for health/soul/anxiety topics):\n' +
+        stressTriggers + '\n' +
+
+        'STRESS TRANSIT HISTORY (Saturn · Mars · Ketu · Sade Sati last 7 years):\n' +
+        '  ' + stressHistoryStr + '\n\n' +
+
+        'SAV BINDUS BY HOUSE (30+ = Reservoir, <25 = Leak):\n' + JSON.stringify(sav) + '\n\n' +
+
+        'D9 NAVAMSA (inner strength / soul purpose):\n' + d9str + '\n\n' +
+
+        'D10 DASAMSA (career / public role):\n' + d10str + '\n\n' +
+
+        'CURRENT PLANETARY TRANSITS (where planets are RIGHT NOW):\n' +
+        '  Saturn (Karma and Discipline): ' + saturnTransit + '\n' +
+        '  Jupiter (Expansion and Grace): ' + jupiterTransit + '\n' +
+        '  Rahu North Node (Obsession and Ambition): ' + rahuTransit + '\n' +
+        '  Ketu South Node (Release and Detachment): ' + ketuTransit + '\n' +
+        '  Others: ' + (otherTransits.join(', ') || 'None') + '\n\n' +
+
+        'TRANSIT ANALYSIS RULES:\n' +
+        '- Rahu and Ketu ALWAYS move retrograde (reverse through zodiac). Never say they move direct.\n' +
+        '- Saturn transit over rising sign or Moon sign = period of pressure and discipline.\n' +
+        '- Jupiter transit over rising sign or Moon sign = period of expansion and opportunity.\n' +
+        '- Rahu transit = intensification and new obsessions in that house area.\n' +
+        '- Ketu transit = detachment and letting go in that house area.\n' +
+        '- Always check if Saturn or Jupiter aspects (looks at) the 10th house from its transit position.\n\n' +
+
+        '4TH HOUSE DETAILS:\n' +
+        '  Lord: ' + fourthHouseLord + '\n' +
+        '  Occupants: ' + (fourthHousePlanets.join(', ') || 'None') + '\n\n' +
+
+        'PROPERTY ACTIVATION HISTORY (Saturn · Jupiter · Mars last 7 years — includes Vedic aspects):\n' +
+        '  ' + propertyHistoryStr + '\n\n' +
+
+        'PROPERTY DASHA ACTIVATIONS (current periods):\n' +
+        '  ' + propertyDashaStr + '\n\n' +
+
+        'PROPERTY DETECTION RULES:\n' +
+        '- NEVER say no property activation without checking ALL 4 triggers:\n' +
+        '  (1) Saturn transiting OR aspecting 4th house in last 7 years\n' +
+        '  (2) Jupiter in or aspecting 4th house (5th, 7th, 9th special aspects)\n' +
+        '  (3) Current major or sub-period lord is 4th house lord\n' +
+        '  (4) Current major or sub-period lord sits in 4th house\n' +
+        '- If ANY one trigger is true = property event is likely\n' +
+        '- If TWO or more are true = property event is almost certain\n' +
+        '- Saturn in 4th = pressure to resolve home situation (buy, sell, renovate, relocate)\n' +
+        '- Jupiter in or aspecting 4th = opportunity and expansion in home area\n' +
+        '- Mars in or aspecting 4th = property action, renovation, urgency, or dispute\n' +
+        '- 4th lord period = the person thinks about and acts on home matters\n' +
+        '- Planet in 4th house period = that planet\'s energy activates home life\n\n' +
+
+        'VEDIC ASPECT RULES (Graha Drishti — use these for ALL transit and natal analysis):\n' +
+        '- ALL planets aspect the 7th house from their position (opposition)\n' +
+        '- SATURN special aspects: also aspects 3rd and 10th house from its position\n' +
+        '- JUPITER special aspects: also aspects 5th and 9th house from its position\n' +
+        '- MARS special aspects: also aspects 4th and 8th house from its position\n' +
+        '- Rahu/Ketu aspect the 5th and 9th from their positions (like Jupiter)\n' +
+        '- Example: Saturn in House 1 aspects Houses 3, 7, 10\n' +
+        '- Example: Jupiter in House 5 aspects Houses 9, 11 (5+7-1), 1 (5+9-12)\n' +
+        '- Example: Mars in House 2 aspects Houses 5, 6 (2+4), 9 (2+7)\n' +
+        '- NEVER say a planet "does not aspect" a house without checking these special aspects\n';
+
+    return systemPrompt;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT — SEND MESSAGES
+═══════════════════════════════════════════════════════════ */
+var _isBubbleSend = false;
+
+function sendBubble(categoryIdx, bubbleIdx) {
+    activeCategoryIdx = categoryIdx;
+    var question = CHAT_CATEGORIES[categoryIdx].bubbles[bubbleIdx];
+    document.getElementById('chatInput').value = question;
+    sendSessionEvent({ event: 'question_asked', question: question, is_bubble: true });
+    sessionQuestions.push('[Bubble] ' + question);
+    _isBubbleSend = true;
+    sendChatMessage();
+}
+
+function sendChatMessage() {
+    var input   = document.getElementById('chatInput');
+    var sendBtn = document.getElementById('chatSendBtn');
+    var question = input.value.trim();
+    if (!question) return;
+
+    var isBubble = _isBubbleSend;
+    _isBubbleSend = false;
+
+    if (!isBubble) {
+        sendSessionEvent({ event: 'question_asked', question: question, is_bubble: false });
+        sessionQuestions.push('[Chat] ' + question);
+    }
+
+    appendBubble(question, 'user');
+    input.value = '';
+    sendBtn.disabled = true;
+
+    var typingId = appendTyping();
+    chatHistory.push({ role: 'user', content: question });
+
+    fetch(BACKEND_URL + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: buildSystemPrompt(activeCategoryIdx), messages: chatHistory })
+    })
+    .then(function(res) {
+        if (!res.ok) throw new Error('Server returned ' + res.status);
+        return res.json();
+    })
+    .then(function(data) {
+        var answer = data.answer || data.content || (data.choices && data.choices[0] && data.choices[0].message ? data.choices[0].message.content : null) || 'The cosmos did not respond. Please try again.';
+        chatHistory.push({ role: 'assistant', content: answer });
+        replaceTyping(typingId, answer);
+        if (data.tokens && data.tokens.total) {
+            var tokenEl = document.getElementById(typingId);
+            if (tokenEl) {
+                var tokenLine = document.createElement('div');
+                tokenLine.style.cssText = 'font-size:0.7rem;color:#aaa;margin-top:0.4rem;padding-top:0.3rem;border-top:1px solid #f0f0f0;';
+                tokenLine.textContent = '\u21b3 ' + data.tokens.total.toLocaleString() +
+                    ' tokens  (' + data.tokens.input.toLocaleString() + ' in \u00b7 ' +
+                    data.tokens.output.toLocaleString() + ' out)  \u00b7 ' + (data.tokens.model || 'AI');
+                tokenEl.appendChild(tokenLine);
+            }
+        }
+        sendBtn.disabled = false;
+        input.focus();
+    })
+    .catch(function(err) {
+        replaceTyping(typingId, '⚠️ Could not reach the server (' + err.message + '). Check your connection.');
+        console.error('Chat error:', err);
+        sendBtn.disabled = false;
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT — DOM HELPERS
+═══════════════════════════════════════════════════════════ */
+function appendBubble(text, role) {
+    var id  = 'cb-' + (bubbleCounter++);
+    var div = document.createElement('div');
+    div.id = id;
+    div.className = role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai';
+    if (role === 'ai') {
+        var label = document.createElement('span');
+        label.className = 'ai-label';
+        label.textContent = 'Soul Nakshatra';
+        div.appendChild(label);
+        div.appendChild(document.createTextNode(text));
+    } else {
+        div.textContent = text;
+    }
+    var msgs = document.getElementById('chatMessages');
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function appendTyping() {
+    var id  = 'cb-' + (bubbleCounter++);
+    var div = document.createElement('div');
+    div.id = id;
+    div.className = 'chat-bubble-ai';
+    div.innerHTML = '<span class="ai-label">Soul Nakshatra</span><div class="typing-dots"><span></span><span></span><span></span></div>';
+    var msgs = document.getElementById('chatMessages');
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+}
+
+function replaceTyping(id, text) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var formatted = escaped
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '</p><p style="margin:0.6em 0">')
+        .replace(/\n/g, '<br>');
+    el.innerHTML = '<span class="ai-label">Soul Nakshatra</span><p>' + formatted + '</p>';
+    document.getElementById('chatMessages').scrollTop = 99999;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   SESSION TRACKING
+═══════════════════════════════════════════════════════════ */
+function startSession() {
+    var base = BACKEND_URL || window.location.origin;
+    console.log('[Session] Calling session-start at:', base + '/api/ping-start');
+
+    fetch(base + '/api/ping-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(function(r) {
+        console.log('[Session] session-start HTTP status:', r.status);
+        return r.json();
+    })
+    .then(function(data) {
+        console.log('[Session] server response:', JSON.stringify(data));
+        currentSessionId = data.session_id || '';
+        sessionStartTime = Date.now();
+        console.log('[Session] Started:', currentSessionId);
+    })
+    .catch(function(e) {
+        console.error('[Session] startSession failed:', e.message);
+    });
+}
+
+function sendSessionEvent(eventData) {
+    if (!currentSessionId) {
+        console.warn('[Session] No session ID yet, retrying in 2s...');
+        setTimeout(function() {
+            if (currentSessionId) {
+                sendSessionEvent(eventData);
+            }
+        }, 2000);
+        return;
+    }
+    var base = BACKEND_URL || window.location.origin;
+    eventData.session_id = currentSessionId;
+    console.log('[Session] Sending event:', JSON.stringify(eventData));
+
+    fetch(base + '/api/ping-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData)
+    })
+    .then(function(r) {
+        console.log('[Session] event response status:', r.status);
+        return r.json();
+    })
+    .then(function(d) {
+        console.log('[Session] event response:', JSON.stringify(d));
+    })
+    .catch(function(e) {
+        console.warn('[Session] Event failed:', e.message);
+    });
+}
+
+function endSession() {
+    if (!currentSessionId) return;
+    if (sessionStartTime && (Date.now() - sessionStartTime) < 10000) {
+        console.warn('[Session] Ignoring endSession — session too new');
+        return;
+    }
+    var base = BACKEND_URL || window.location.origin;
+    var payload = {
+        session_id:        currentSessionId,
+        questions:         sessionQuestions,
+        birth_date:        sessionBirthDate,
+        birth_place:       sessionBirthPlace,
+        chart_generated:   sessionChartGenerated,
+        analysis_provided: sessionAnalysisProvided
+    };
+    console.log('[Session] Ending session:', currentSessionId);
+    fetch(base + '/api/ping-end', {
+        method:    'POST',
+        headers:   { 'Content-Type': 'application/json' },
+        body:      JSON.stringify(payload),
+        keepalive: true
+    })
+    .then(function(r) { console.log('[Session] ping-end status:', r.status); })
+    .catch(function(e) { console.warn('[Session] ping-end failed:', e.message); });
+    console.log('[Session] Ended:', currentSessionId);
+    currentSessionId = '';
+    sessionStartTime = null;
+}
+
+window.addEventListener('beforeunload', function() { endSession(); });
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        console.log('[Session] Tab hidden — triggering session end');
+        endSession();
+    } else if (document.visibilityState === 'visible' && !currentSessionId) {
+        startSession();
+    }
+});
+
+console.log('[Init] About to call startSession');
+startSession();
+
+function showError(message, isError) {
+    if (isError === undefined) isError = true;
+    var el = document.getElementById('errorDisplay');
+    el.textContent = message;
+    el.style.background  = isError ? 'rgba(239,68,68,0.1)'  : 'rgba(74,222,128,0.1)';
+    el.style.borderColor = isError ? 'rgba(239,68,68,0.3)'  : 'rgba(74,222,128,0.3)';
+    el.style.color       = isError ? '#dc2626'              : '#16a34a';
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 5000);
+}
+</script>
+</body>
+</html>
