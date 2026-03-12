@@ -1294,7 +1294,7 @@ If ANY trigger is confirmed — name the year and what likely happened. Never sa
 4. RELATIONSHIPS
 Was there a period of harmony or significant stress in relationships, marriage, or partnerships? Any major relationship event like marriage, separation, or a significant new partnership? If yes: when and what caused it?
 
-Format: For each category write 2 sentences maximum. If nothing significant happened write: No major activation in this area.
+Format: Put each category number and name on its OWN line, then write the content starting on the NEXT line (never on the same line as the category header). Write 2 sentences maximum per category. If nothing significant happened write: No major activation in this area.
 Use plain English. No jargon. Maximum 120 words for this section.
 
 # ⚡ CURRENT CYCLE & FOCUS
