@@ -488,9 +488,19 @@ function generateChart(event) {
                 end:           cd.pratyantar_end,
                 duration_days: cd.pratyantar_duration_days
             } : null,
-            property_transit_history: (data.data && data.data.property_transit_history) ? data.data.property_transit_history : null,
-            stress_transit_history:   (data.data && data.data.stress_transit_history)   ? data.data.stress_transit_history   : null
+            property_transit_history:   (data.data && data.data.property_transit_history)  ? data.data.property_transit_history  : null,
+            stress_transit_history:     (data.data && data.data.stress_transit_history)    ? data.data.stress_transit_history    : null,
+            verified_current_transits:  (data.data && data.data.verified_current_transits) ? data.data.verified_current_transits : null
         };
+        // Stale transit check
+        var _vt = data.data && data.data.verified_current_transits;
+        if (_vt && _vt.rahu_to) {
+            if (new Date() > new Date(_vt.rahu_to)) {
+                console.warn('[RAHU STALE] Transit table expired on ' + _vt.rahu_to + ' — update RAHU_TRANSITS in pyjhora_server.py!');
+            } else {
+                console.log('[RAHU OK] Current: Rahu ' + _vt.rahu + ' until ' + _vt.rahu_to);
+            }
+        }
         chartDisplay.innerHTML =
             '<div style="text-align:center;padding:1.75rem 1rem;">' +
             '<div style="font-size:2rem;margin-bottom:0.75rem;">✨</div>' +
@@ -682,6 +692,32 @@ function renderBubbles(idx) {
 ═══════════════════════════════════════════════════════════ */
 function buildSystemPrompt(categoryIdx) {
     var d   = window.aiAnalysisData || {};
+
+    // Build Rahu/Ketu context from live backend data — never hardcode
+    var vt      = d.verified_current_transits || {};
+    var rahuSign = vt.rahu     || 'Unknown';
+    var ketuSign = vt.ketu     || 'Unknown';
+    var rahuFrom = vt.rahu_from ? vt.rahu_from.slice(0, 7) : '?';
+    var rahuTo   = vt.rahu_to   ? vt.rahu_to.slice(0, 7)   : '?';
+    var rahuPrev = vt.rahu_prev || {};
+    var rahuNext = vt.rahu_next || {};
+    var rahuContext =
+        'CURRENT Rahu/Ketu transit (from backend lookup table — use these dates exactly):\n' +
+        '  Previous: Rahu ' + (rahuPrev.rahu || '?') +
+            ' / Ketu ' + (rahuPrev.ketu || '?') +
+            ' (' + ((rahuPrev.from || '?').slice(0, 7)) +
+            ' to '   + ((rahuPrev.to   || '?').slice(0, 7)) + ')\n' +
+        '  CURRENT:  Rahu ' + rahuSign +
+            ' / Ketu ' + ketuSign +
+            ' (' + rahuFrom + ' to ' + rahuTo + ')\n' +
+        '  Next:     Rahu ' + (rahuNext.rahu || '?') +
+            ' / Ketu ' + (rahuNext.ketu || '?') +
+            ' (' + ((rahuNext.from || '?').slice(0, 7)) +
+            ' to '   + ((rahuNext.to   || '?').slice(0, 7)) + ')\n' +
+        'Rahu example: "Rahu in ' + rahuSign + ' since ' + rahuFrom + ' — exits ' + rahuTo + '"\n' +
+        'Ketu example: "Ketu in ' + ketuSign + ' since ' + rahuFrom + ' — exits ' + rahuTo + '"\n' +
+        'NEVER use the previous or next row dates when describing the current transit.\n';
+
     var cat = (categoryIdx >= 0 && CHAT_CATEGORIES[categoryIdx])
               ? CHAT_CATEGORIES[categoryIdx]
               : { name: 'General', task: 'Answer the question using the chart data provided.' };
@@ -1060,25 +1096,6 @@ function buildSystemPrompt(categoryIdx) {
         'how this shows up as a quiet withdrawal or loss of interest, ' +
         'whether this detachment is spiritually healthy or causing loss, ' +
         'and when Ketu moves on\n' +
-        '- Rahu example phrasing to follow (dates are illustrative — ' +
-        'ALWAYS use the actual house from the chart data and Dec 2026 as the exit date): ' +
-        '"Rahu in your 4th house is creating an almost obsessive focus on home — ' +
-        'you may find yourself constantly thinking about moving, renovating, or feeling ' +
-        'your current home is never quite right. ' +
-        'This restlessness around home and mother figures continues ' +
-        'until Dec 2026 when Rahu shifts — until then channel this ' +
-        'energy into one concrete home improvement rather than ' +
-        'endless searching for something better"\n' +
-        '- Ketu example phrasing to follow (dates are illustrative — ' +
-        'ALWAYS use the actual house from the chart data and Dec 2026 as the exit date): ' +
-        '"Ketu in your 10th house is quietly draining your attachment ' +
-        'to career status and public image. ' +
-        'You may notice a growing sense that your job title or ' +
-        'professional achievements feel hollow or pointless — ' +
-        'this is not depression, it is Ketu disconnecting you from ' +
-        'ego-driven ambition. This is actually preparing you for a ' +
-        'more spiritually aligned career direction after Dec 2026 ' +
-        'when Ketu moves on"\n' +
         '- Rahu always creates craving, obsession, foreignness, ' +
         'excess in the house it occupies — describe the specific ' +
         'flavor of that obsession for THIS house\n' +
@@ -1087,11 +1104,7 @@ function buildSystemPrompt(categoryIdx) {
         'specifically feels meaningless or draining for THIS house\n' +
         '- Never say Rahu or Ketu "move direct" — ' +
         'they are always retrograde\n' +
-        '- Always use the verified Rahu/Ketu transit dates: ' +
-        'Rahu entered Aquarius in May 2025 and moves to Capricorn in Dec 2026. ' +
-        'Ketu entered Leo in May 2025 and moves to Cancer in Dec 2026. ' +
-        'When saying "when Rahu/Ketu moves on" ALWAYS say Dec 2026, never May 2025 — ' +
-        'May 2025 is when they arrived, Dec 2026 is when they leave.\n' +
+        rahuContext +
         '- For Soul and Fulfilment questions, ALWAYS start your response with the ' +
         'Atmakaraka planet from the ATMAKARAKA section above. State which planet it is, ' +
         'what it means as a soul desire, and where it sits in the soul chart. ' +
@@ -1236,11 +1249,7 @@ function buildSystemPrompt(categoryIdx) {
         'withdrawal from the house it occupies — describe what ' +
         'specifically feels meaningless or draining for THIS house\n' +
         '- Never say Rahu or Ketu "move direct" — they are always retrograde\n' +
-        '- Always use the verified Rahu/Ketu transit dates: ' +
-        'Rahu entered Aquarius in May 2025 and moves to Capricorn in Dec 2026. ' +
-        'Ketu entered Leo in May 2025 and moves to Cancer in Dec 2026. ' +
-        'When saying "when Rahu/Ketu moves on" ALWAYS say Dec 2026, never May 2025 — ' +
-        'May 2025 is when they arrived, Dec 2026 is when they leave.\n' +
+        rahuContext +
         '- Always check if Saturn or Jupiter aspects (looks at) the 10th house from its transit position.\n\n' +
 
         'VEDIC ASPECT RULES (Graha Drishti — use these for ALL transit and natal analysis):\n' +

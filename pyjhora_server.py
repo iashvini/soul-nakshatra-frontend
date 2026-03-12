@@ -718,6 +718,16 @@ def calculate_chart(name, birth_dt, latitude, longitude, tz_offset_hours, jd):
 _SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
           'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
 
+# Rahu/Ketu transit windows — mean node, Lahiri sidereal
+# Format: (start_date, end_date, rahu_sign, ketu_sign)
+# UPDATE this table when a new transit begins — everything else is automatic
+RAHU_TRANSITS = [
+    ('2022-04-12', '2023-10-30', 'Aries',     'Libra'),
+    ('2023-10-30', '2025-05-18', 'Pisces',    'Virgo'),
+    ('2025-05-18', '2026-12-05', 'Aquarius',  'Leo'),
+    ('2026-12-05', '2028-05-26', 'Capricorn', 'Cancer'),
+]
+
 _SPECIAL_OFFSETS = {
     'Jupiter': [5, 7, 9],
     'Saturn':  [3, 7, 10],
@@ -1029,6 +1039,40 @@ def generate_chart_route():
             tz_offset_hours=timezone_offset, jd=jd
         )
         print("✓ Chart generated successfully!")
+
+        # Inject verified Rahu/Ketu transit window from lookup table
+        rahu_prev = rahu_curr = rahu_next = None
+        today_dt  = datetime.utcnow()
+        today_str = today_dt.strftime('%Y-%m-%d')
+        for i, (start_str, end_str, r_sign, k_sign) in enumerate(RAHU_TRANSITS):
+            start_dt = datetime.strptime(start_str, '%Y-%m-%d')
+            end_dt   = datetime.strptime(end_str,   '%Y-%m-%d')
+            if start_dt <= today_dt < end_dt:
+                rahu_curr = {'rahu': r_sign, 'ketu': k_sign, 'from': start_str, 'to': end_str}
+                if i > 0:
+                    ps, pe, pr, pk = RAHU_TRANSITS[i - 1]
+                    rahu_prev = {'rahu': pr, 'ketu': pk, 'from': ps, 'to': pe}
+                if i < len(RAHU_TRANSITS) - 1:
+                    ns, ne, nr, nk = RAHU_TRANSITS[i + 1]
+                    rahu_next = {'rahu': nr, 'ketu': nk, 'from': ns, 'to': ne}
+                break
+
+        # Pull Saturn/Jupiter signs from already-calculated transits
+        transit_map = {p['name']: p.get('rasi', 'Unknown')
+                       for p in (chart_data.get('data', {}).get('transits', {}).get('planets', []) or [])}
+
+        chart_data['data']['verified_current_transits'] = {
+            'saturn':    transit_map.get('Saturn',  'Unknown'),
+            'jupiter':   transit_map.get('Jupiter', 'Unknown'),
+            'rahu':      rahu_curr['rahu']  if rahu_curr else transit_map.get('Rahu'),
+            'ketu':      rahu_curr['ketu']  if rahu_curr else transit_map.get('Ketu'),
+            'rahu_from': rahu_curr['from']  if rahu_curr else None,
+            'rahu_to':   rahu_curr['to']    if rahu_curr else None,
+            'rahu_prev': rahu_prev,
+            'rahu_next': rahu_next,
+            'date':      today_str,
+        }
+
         return jsonify(chart_data)
     except Exception as e:
         print(f"✗ Error generating chart: {e}")
