@@ -718,6 +718,19 @@ def calculate_chart(name, birth_dt, latitude, longitude, tz_offset_hours, jd):
 _SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
           'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
 
+# Nakshatra → ruling planet lookup (27 nakshatras, Vimshottari order)
+NAKSHATRA_LORDS = {
+    'Ashwini': 'Ketu',    'Bharani': 'Venus',   'Krittika': 'Sun',
+    'Rohini':  'Moon',    'Mrigashira': 'Mars',  'Ardra': 'Rahu',
+    'Punarvasu': 'Jupiter', 'Pushya': 'Saturn',  'Ashlesha': 'Mercury',
+    'Magha':   'Ketu',    'Purva Phalguni': 'Venus', 'Uttara Phalguni': 'Sun',
+    'Hasta':   'Moon',    'Chitra': 'Mars',      'Swati': 'Rahu',
+    'Vishakha': 'Jupiter', 'Anuradha': 'Saturn', 'Jyeshtha': 'Mercury',
+    'Mula':    'Ketu',    'Purva Ashadha': 'Venus', 'Uttara Ashadha': 'Sun',
+    'Shravana': 'Moon',   'Dhanishta': 'Mars',   'Shatabhisha': 'Rahu',
+    'Purva Bhadrapada': 'Jupiter', 'Uttara Bhadrapada': 'Saturn', 'Revati': 'Mercury',
+}
+
 # Rahu/Ketu transit windows — mean node, Lahiri sidereal
 # Format: (start_date, end_date, rahu_sign, ketu_sign)
 # UPDATE this table when a new transit begins — everything else is automatic
@@ -1057,20 +1070,43 @@ def generate_chart_route():
                     rahu_next = {'rahu': nr, 'ketu': nk, 'from': ns, 'to': ne}
                 break
 
-        # Pull Saturn/Jupiter signs from already-calculated transits
-        transit_map = {p['name']: p.get('rasi', 'Unknown')
-                       for p in (chart_data.get('data', {}).get('transits', {}).get('planets', []) or [])}
+        # Pull transit planet data (sign, nakshatra, house) from already-calculated transits
+        transit_map = {}
+        for p in (chart_data.get('data', {}).get('transits', {}).get('planets', []) or []):
+            nak = p.get('nakshatra', '')
+            transit_map[p['name']] = {
+                'rasi':          p.get('rasi', 'Unknown'),
+                'nakshatra':     nak,
+                'nakshatra_lord': NAKSHATRA_LORDS.get(nak, 'Unknown') if nak else 'Unknown',
+            }
+
+        # Lagna nakshatra
+        asc_data = chart_data.get('data', {}).get('ascendant', {})
+        lagna_nak_obj = asc_data.get('nakshatra', {})
+        lagna_nak_name = lagna_nak_obj.get('name', '') if isinstance(lagna_nak_obj, dict) else str(lagna_nak_obj)
+        chart_data['data']['lagna_nakshatra']      = lagna_nak_name
+        chart_data['data']['lagna_nakshatra_lord'] = NAKSHATRA_LORDS.get(lagna_nak_name, 'Unknown')
+
+        def _tnk(planet_name):
+            """Return nakshatra string for a transit planet."""
+            d = transit_map.get(planet_name, {})
+            nak = d.get('nakshatra', '')
+            lord = d.get('nakshatra_lord', '')
+            return (nak + ' (lord: ' + lord + ')') if nak else ''
 
         chart_data['data']['verified_current_transits'] = {
-            'saturn':    transit_map.get('Saturn',  'Unknown'),
-            'jupiter':   transit_map.get('Jupiter', 'Unknown'),
-            'rahu':      rahu_curr['rahu']  if rahu_curr else transit_map.get('Rahu'),
-            'ketu':      rahu_curr['ketu']  if rahu_curr else transit_map.get('Ketu'),
-            'rahu_from': rahu_curr['from']  if rahu_curr else None,
-            'rahu_to':   rahu_curr['to']    if rahu_curr else None,
-            'rahu_prev': rahu_prev,
-            'rahu_next': rahu_next,
-            'date':      today_str,
+            'saturn':            transit_map.get('Saturn',  {}).get('rasi', 'Unknown'),
+            'jupiter':           transit_map.get('Jupiter', {}).get('rasi', 'Unknown'),
+            'rahu':              rahu_curr['rahu']  if rahu_curr else transit_map.get('Rahu', {}).get('rasi'),
+            'ketu':              rahu_curr['ketu']  if rahu_curr else transit_map.get('Ketu', {}).get('rasi'),
+            'rahu_from':         rahu_curr['from']  if rahu_curr else None,
+            'rahu_to':           rahu_curr['to']    if rahu_curr else None,
+            'rahu_prev':         rahu_prev,
+            'rahu_next':         rahu_next,
+            'date':              today_str,
+            'saturn_nakshatra':  _tnk('Saturn'),
+            'jupiter_nakshatra': _tnk('Jupiter'),
+            'rahu_nakshatra':    _tnk('Rahu'),
         }
 
         return jsonify(chart_data)
