@@ -290,7 +290,7 @@
 <script>
 console.log('[Init] Script block started');
 /* ── CONFIG ── */
-var BACKEND_URL = 'https://ashvini-ito--soul-nakshatra-flask-app.modal.run'; // v2
+var BACKEND_URL = 'https://ashvini-ito--soul-nakshatra-flask-app.modal.run';
 console.log('[Init] BACKEND_URL:', BACKEND_URL);
 
 /* ═══════════════════════════════════════════════════════════
@@ -388,30 +388,22 @@ var sessionStartTime        = null;
 function searchPlace(event) {
     var query = event.target.value;
     var resultsDiv = document.getElementById('placeResults');
-    console.log('[Place] searchPlace called, query="' + query + '"');
     if (query.length < 3) { resultsDiv.style.display = 'none'; return; }
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
-        var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&email=soul-nakshatra%40example.com';
-        console.log('[Place] Fetching:', url);
-        fetch(url)
-            .then(function(r) {
-                console.log('[Place] Response status:', r.status, r.ok);
-                return r.json();
-            })
+        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&email=soul-nakshatra%40example.com')
+            .then(function(r) { return r.json(); })
             .then(function(places) {
-                console.log('[Place] Results count:', places.length, places);
                 if (places.length > 0) {
                     resultsDiv.innerHTML = places.map(function(p) {
                         return '<div class="place-item" onclick=\'selectPlace(' + JSON.stringify({ name: p.display_name, lat: p.lat, lon: p.lon }).replace(/'/g, '&#39;') + ')\'>' + p.display_name + '</div>';
                     }).join('');
                     resultsDiv.style.display = 'block';
-                    console.log('[Place] Dropdown shown');
                 } else {
-                    console.log('[Place] No results returned');
+                    resultsDiv.style.display = 'none';
                 }
             })
-            .catch(function(e) { console.error('[Place] Fetch error:', e.message, e); });
+            .catch(function(e) { console.error('Place search error:', e); });
     }, 500);
 }
 
