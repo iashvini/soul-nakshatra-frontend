@@ -392,10 +392,10 @@ function buildCareerBadges(parts) {
         var segs  = part.split(/\s*[—–-]\s*/);
         var field = segs[0] ? segs[0].trim() : part;
         var label = segs[1] ? segs[1].trim() : '';
-        var bg     = i === 0 ? '#EEEDFE'             : 'transparent';
-        var border = i === 0 ? '1.5px solid #7F77DD' : '1px solid #e0e0e0';
-        var color  = i === 0 ? '#3C3489'             : '#666666';
-        var dot    = i === 0 ? '#534AB7'             : '#999999';
+        var bg     = i === 0 ? '#EEEDFE'             : '#FAEEDA';
+        var border = i === 0 ? '1.5px solid #7F77DD' : '1px solid #EF9F27';
+        var color  = i === 0 ? '#3C3489'             : '#633806';
+        var dot    = i === 0 ? '#534AB7'             : '#854F0B';
         var fw     = i === 0 ? '500'                 : '400';
         h += '<span style="display:inline-flex;align-items:center;gap:5px;background:' + bg + ';border:' + border + ';border-radius:20px;padding:4px 12px;margin:3px 4px 3px 0;white-space:nowrap;">'
            + '<span style="width:5px;height:5px;border-radius:50%;background:' + dot + ';display:inline-block;flex-shrink:0;"></span>'
