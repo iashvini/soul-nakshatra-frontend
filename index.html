@@ -822,6 +822,27 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
     }
 
     // Planets list — explicit lines Gemini can parse
+    // Planet dignity lookup — exaltation/debilitation/own sign only
+    var DIGNITY = {
+        Sun:     { exalted: ['Aries'],       debilitated: ['Libra'],        own: ['Leo'] },
+        Moon:    { exalted: ['Taurus'],      debilitated: ['Scorpio'],      own: ['Cancer'] },
+        Mars:    { exalted: ['Capricorn'],   debilitated: ['Cancer'],       own: ['Aries','Scorpio'] },
+        Mercury: { exalted: ['Virgo'],       debilitated: ['Pisces'],       own: ['Gemini','Virgo'] },
+        Jupiter: { exalted: ['Cancer'],      debilitated: ['Capricorn'],    own: ['Sagittarius','Pisces'] },
+        Venus:   { exalted: ['Pisces'],      debilitated: ['Virgo'],        own: ['Taurus','Libra'] },
+        Saturn:  { exalted: ['Libra'],       debilitated: ['Aries'],        own: ['Capricorn','Aquarius'] },
+        Rahu:    { exalted: ['Taurus','Gemini'], debilitated: ['Scorpio','Sagittarius'], own: [] },
+        Ketu:    { exalted: ['Scorpio','Sagittarius'], debilitated: ['Taurus','Gemini'], own: [] }
+    };
+    function getPlanetDignity(planetName, sign) {
+        var d = DIGNITY[planetName];
+        if (!d || !sign) return '';
+        if (d.debilitated.indexOf(sign) !== -1) return ' [DEBILITATED]';
+        if (d.exalted.indexOf(sign) !== -1)     return ' [EXALTED]';
+        if (d.own.indexOf(sign) !== -1)          return ' [OWN SIGN]';
+        return '';
+    }
+
     // House signs table — all 12 houses with sign and lord (never let model guess)
     var houseSignsTable = '';
     if (d.planets_in_houses) {
@@ -831,7 +852,7 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
                 var hSign = hobj.rasi || '?';
                 var hLord = hobj.house_lord || '?';
                 var hPlanets = (hobj.planets || []).map(function(p) { return p.name; }).join(', ') || 'empty';
-                houseSignsTable += 'House ' + hnum + ': ' + hSign + ' | Lord: ' + hLord + ' | Planets: ' + hPlanets + '\n';
+                houseSignsTable += 'House ' + hnum + ': ' + hSign + ' | Lord: ' + hLord + getPlanetDignity(hLord, hSign) + ' | Planets: ' + hPlanets + '\n';
             }
         }
     }
@@ -844,6 +865,7 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
             if (h.planets && h.planets.length > 0) {
                 h.planets.forEach(function(p) {
                     planetsList += p.name + ' in House ' + h.house_number + ' (' + p.rasi + ')' +
+                        getPlanetDignity(p.name, p.rasi) +
                         (p.is_retrograde ? ' [Retrograde]' : '') +
                         ' | Nakshatra: ' + p.nakshatra + '\n';
                 });
