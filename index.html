@@ -822,6 +822,21 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
     }
 
     // Planets list — explicit lines Gemini can parse
+    // House signs table — all 12 houses with sign and lord (never let model guess)
+    var houseSignsTable = '';
+    if (d.planets_in_houses) {
+        for (var hnum = 1; hnum <= 12; hnum++) {
+            var hobj = d.planets_in_houses['House_' + hnum];
+            if (hobj) {
+                var hSign = hobj.rasi || '?';
+                var hLord = hobj.house_lord || '?';
+                var hPlanets = (hobj.planets || []).map(function(p) { return p.name; }).join(', ') || 'empty';
+                houseSignsTable += 'House ' + hnum + ': ' + hSign + ' | Lord: ' + hLord + ' | Planets: ' + hPlanets + '\n';
+            }
+        }
+    }
+    if (!houseSignsTable) houseSignsTable = 'Not available';
+
     var planetsList = '';
     if (d.planets_in_houses) {
         for (var house in d.planets_in_houses) {
@@ -1362,6 +1377,11 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
 
         'ATMAKARAKA (Soul Indicator — planet with highest degree within its sign):\n' +
         atmakarakaStr + '\n\n' +
+
+        'HOUSE SIGNS — USE THESE EXACTLY, NEVER RECALCULATE:\n' + houseSignsTable + '\n' +
+        'RULE: The sign and lord for each house are fixed above. ' +
+        'Never infer a house sign from a planet\'s position. ' +
+        'If asked about the 4th house, always use the sign and lord shown in House 4 above.\n\n' +
 
         'PLANETS IN HOUSES (D1 — Rashi Chart):\n' + planetsList + '\n' +
 
