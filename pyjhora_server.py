@@ -1379,6 +1379,7 @@ Structure the response across these 3 layers:
 
 LAYER 1 — THE OPERATING SYSTEM (2 sentences):
 Describe how this person comes across to the world — the rising sign, lagna nakshatra {lagna_nak_name}, and every planet sitting in the 1st house. If multiple planets occupy the 1st house, name them and describe how they combine into a single outward personality. Give this layer a short evocative name in parentheses — e.g. "The Precision Engine" or "The Structured Visionary".
+CRITICAL: Layer 1 must be exactly 2 separate sentences ending with a full stop each. Never combine them into one long compound sentence with em-dashes or commas. End the second sentence with the archetype name in parentheses.
 
 LAYER 2 — THE EMOTIONAL INTERIOR (2-3 sentences):
 Describe how this person feels on the inside — the Moon sign, Moon nakshatra, and Moon house. If Moon is the Atmakaraka (highest degree planet), say so explicitly and explain what it means: their soul's deepest mission is expressed through their emotional nature. Describe the tension or contrast between the outer personality (Layer 1) and the inner emotional world — this contrast is often the most relatable part. Give this layer an evocative name.
