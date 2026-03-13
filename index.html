@@ -1308,6 +1308,18 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
                     'Give one specific practice or direction that feeds ' +
                     'the soul this month.'
             };
+            var isSpecificSoulQ = categoryIdx === 6 && (
+                userQuestion.includes('crave') || userQuestion.includes('soul actually') ||
+                userQuestion.includes('peace') || userQuestion.includes('mental') ||
+                userQuestion.includes('happiness') || userQuestion.includes('archetype')
+            );
+            if (isSpecificSoulQ) {
+                return 'CATEGORY DEPTH INSTRUCTION:\n' +
+                    'OVERRIDE: This is a specific preset question with its own structure defined in TASK below. ' +
+                    'Ignore the generic soul framework. Do NOT start with Atmakaraka unless the TASK says to. ' +
+                    'Do NOT produce a Stop/Start list unless the TASK says to. ' +
+                    'Follow ONLY the numbered lenses in TASK, in order, as flowing prose.\n\n';
+            }
             var depthRule = categoryDepthRules[categoryIdx] || categoryDepthRules[6];
             return 'CATEGORY DEPTH INSTRUCTION:\n' + depthRule + '\n\n';
         })() +
@@ -1317,26 +1329,26 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
             if (categoryIdx !== 6) return cat.task;
             var genericSoulTask = cat.task;
             if (userQuestion.includes('crave') || userQuestion.includes('soul actually')) {
-                return 'SOUL CRAVING READING — use these specific lenses only:\n'
-                    + '1. ATMAKARAKA: Identify the Atmakaraka planet and its sign in D9 (Navamsa chart). This is the soul\'s deepest hunger — describe what it literally craves, not what it has. Be specific: not "emotional depth" but what scene or experience would make the soul feel finally complete.\n'
-                    + '2. UNFULFILLED HOUSE: Find the most unoccupied or afflicted kama house (3rd, 7th, 11th). What desire does this house represent that keeps surfacing but never feeling fully satisfied?\n'
-                    + '3. RAHU OBSESSION: Rahu shows what the soul is magnetically pulled toward this lifetime even if it feels excessive. Name the specific obsession.\n'
-                    + '4. RIGHT NOW: What is the current dasha activating in terms of soul hunger — what craving is loudest in this exact period?\n'
-                    + 'End with bold **Right now:** + one concrete action the person can take this week to feed the soul craving.\n';
+                return 'CRITICAL: This is a SOUL CRAVING READING. Address ONLY these 4 lenses in flowing prose, in this exact order. Do not deviate into generic soul advice. Do not produce a Stop/Start list.\n\n'
+                    + '1. ATMAKARAKA: Identify the Atmakaraka planet and its sign in D9 (Navamsa chart). Describe what it literally craves — not what it has. Be specific: name a concrete scene or experience that would make this soul feel finally complete.\n'
+                    + '2. UNFULFILLED HOUSE: Find the most unoccupied or afflicted kama house (3rd, 7th, or 11th). Name the specific desire this house represents that keeps surfacing but never feeling fully satisfied.\n'
+                    + '3. RAHU OBSESSION: Rahu reveals what the soul is magnetically pulled toward this lifetime even if excessive. Name the specific obsession this Rahu placement creates.\n'
+                    + '4. RIGHT NOW: What is the current dasha period activating in terms of soul hunger — what craving is loudest right now?\n'
+                    + 'End with bold **Right now:** + one concrete action to feed the soul craving this week.\n';
             } else if (userQuestion.includes('peace') || userQuestion.includes('mental')) {
-                return 'MENTAL PEACE READING — use these specific lenses only:\n'
-                    + '1. 4TH HOUSE: The 4th house is the seat of mental peace. What sign rules it, who is its lord, where does that lord sit, and what does that tell us about WHERE this person finds peace — internally or externally, through solitude or people, through structure or flow?\n'
-                    + '2. MOON CONDITION: Is the Moon in a friendly or enemy sign, aspected by malefics? This shows how easily peace comes — describe the specific obstacle between this person and peace.\n'
-                    + '3. SATURN\'S ROLE: Saturn either disciplines the mind toward peace or creates chronic anxiety. Identify exactly which it is doing in this chart and why.\n'
-                    + '4. WHAT DESTROYS PEACE: Name the one planetary combination most likely to shatter mental calm for this person — be specific, not generic.\n'
-                    + 'End with bold **Right now:** + one specific practice that directly addresses the biggest peace obstacle.\n';
+                return 'CRITICAL: This is a MENTAL PEACE READING. Address ONLY these 4 lenses in flowing prose, in this exact order. Do not start with Atmakaraka. Do not produce a Stop/Start list.\n\n'
+                    + '1. 4TH HOUSE: The 4th house is the seat of mental peace. Name its ruling sign, identify its lord and where that lord sits, then describe exactly WHERE and HOW this person finds peace — alone or with others, through structure or through letting go.\n'
+                    + '2. MOON CONDITION: Is the Moon in a friendly or enemy sign? Is it aspected by malefics? Describe the specific obstacle that stands between this person and inner peace.\n'
+                    + '3. SATURN\'S ROLE: Saturn either builds discipline toward peace or manufactures chronic anxiety. State exactly which it is doing in this chart and why — be specific to the house and sign.\n'
+                    + '4. WHAT DESTROYS PEACE: Name the single planetary combination most likely to shatter mental calm for this person. Be specific — name the planets and the mechanism.\n'
+                    + 'End with bold **Right now:** + one specific daily practice that directly addresses the biggest peace obstacle.\n';
             } else if (userQuestion.includes('happiness') || userQuestion.includes('archetype')) {
-                return 'HAPPINESS ARCHETYPE READING — use these specific lenses only:\n'
-                    + '1. ARCHETYPE NAME: Based on the 5th house sign, its lord, and Jupiter\'s placement, give this person\'s happiness archetype a specific evocative name — e.g. "The Sovereign Builder", "The Hidden Mystic", "The Joyful Architect". Explain what this archetype means in 2 sentences.\n'
-                    + '2. WHAT LIGHTS THEM UP: The 5th house shows what genuinely delights the soul — creativity, children, speculation, romance, performance. Name the specific activity or experience this person lights up doing, based on the 5th house planets and lord.\n'
-                    + '3. VENUS LAYER: Venus shows where beauty and pleasure live. Its sign, house, and nakshatra reveal the texture of happiness — describe the specific aesthetic or sensory experience that makes this person feel alive.\n'
-                    + '4. THE SHADOW OF JOY: What pattern blocks happiness for this archetype — what do they mistake for happiness that actually drains them? Be specific to the chart.\n'
-                    + 'End with bold **Right now:** + one concrete experience this week that matches their archetype perfectly.\n';
+                return 'CRITICAL: This is a HAPPINESS ARCHETYPE READING. Address ONLY these 4 lenses in flowing prose, in this exact order. Do not start with Atmakaraka. Do not produce a Stop/Start list.\n\n'
+                    + '1. ARCHETYPE NAME: Based on the 5th house sign, its lord, and Jupiter\'s placement — give this person\'s happiness archetype a specific evocative name in quotes, e.g. "The Sovereign Builder" or "The Hidden Mystic". Then explain what that archetype means for how they experience joy — 2 sentences.\n'
+                    + '2. WHAT LIGHTS THEM UP: The 5th house reveals what genuinely delights this soul. Name the specific activity or experience — creativity, teaching, speculation, children, performance — that this person lights up doing. Be concrete, not generic.\n'
+                    + '3. VENUS LAYER: Venus reveals the texture of pleasure. Its sign, house, and nakshatra show the specific aesthetic or sensory experience that makes this person feel most alive. Describe it vividly.\n'
+                    + '4. THE SHADOW OF JOY: Name the specific pattern that blocks happiness for this archetype — what they mistake for joy that actually drains them. Pull this directly from the chart, not from generic archetypes.\n'
+                    + 'End with bold **Right now:** + one concrete experience this week that perfectly matches their archetype.\n';
             } else {
                 return genericSoulTask;
             }
