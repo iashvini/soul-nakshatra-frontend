@@ -1274,7 +1274,20 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
         '1-2 sentences explaining what the quiet energy means for ' +
         'the person — e.g. energy flowing inward, a period of ' +
         'consolidation, or what to expect when activation next arrives. ' +
-        'Make the quiet period feel meaningful, not empty.\n\n' +
+        'Make the quiet period feel meaningful, not empty.\n' +
+
+        'RULE 7 — REASON BEFORE RESPONDING: Before writing your response, silently work through this checklist. Do not show the checklist to the user — only show the final response.\n' +
+        '\n' +
+        'REASONING CHECKLIST:\n' +
+        'Step 1 — RELEVANT HOUSE: Which house governs this question? (Career=10, Finance=2+11, Health=1+6, Partnership=7, Children=5, Property=4, Soul=1+5+9)\n' +
+        'Step 2 — HOUSE LORD: Who is the lord of that house? Where does it sit? Is it debilitated, exalted, retrograde, or in own sign? If debilitated — this is the primary obstacle. Name it.\n' +
+        'Step 3 — BINDU SCORE: What is the SAV bindu score of that house? Below 28 = weak outcomes, 28-35 = average, 36+ = strong. Let this set the overall tone of the prediction.\n' +
+        'Step 4 — DASHA CONNECTION: Is the current Mahadasha or Antardasha lord connected to that house — does it own it, sit in it, or aspect it? If yes = this period actively triggers this house. If no = results are indirect or delayed.\n' +
+        'Step 5 — TRANSIT CHECK: Is Saturn or Jupiter currently transiting or aspecting that house? Both transiting = high probability window. Neither = quiet period.\n' +
+        'Step 6 — NAKSHATRA CHAIN: What nakshatra is the house lord in? Who rules that nakshatra? Where does that nakshatra lord sit? This chain reveals the hidden flavour of the prediction.\n' +
+        'Step 7 — CONTRADICTIONS: Is there any factor that contradicts the main prediction? Name it honestly in the response — contradictions build trust.\n' +
+        '\n' +
+        'After completing all 7 steps silently, write your response using only the findings from these steps. Every claim must trace back to at least one step.\n\n' +
 
         'NAKSHATRA RULES:\n' +
         '- Each nakshatra has a ruling planet that colours how that planet or house expresses itself\n' +
@@ -1477,6 +1490,27 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
             '  ' + stressHistoryStr + '\n\n';
     }
 
+    // ── Timing question detection ──
+    var additionalContext = '';
+    var timingKeywords = /when will|how long|which year|what year|how soon|will i ever|is this a good time|will i get|when can i|how many years/i;
+    if (timingKeywords.test(userQuestion)) {
+        additionalContext +=
+            '\n\u2550\u2550\u2550 TIMING QUESTION \u2014 FOLLOW THIS STRUCTURE \u2550\u2550\u2550\n' +
+            'Count how many of these 3 layers confirm the event:\n' +
+            '  Layer 1: Dasha lord connected to relevant house?\n' +
+            '  Layer 2: Saturn or Jupiter transiting that house?\n' +
+            '  Layer 3: Both Jupiter AND Saturn aspecting same house within 12 months?\n' +
+            '\n' +
+            'Structure your response in exactly 3 parts:\n' +
+            'PART 1 \u2014 CURRENT WINDOW: Is right now (within 6 months) favourable for this event? State how many layers confirm it and what that means. After stating the layer count, inject the matching confidence badge HTML exactly as written below \u2014 do not modify it:\n' +
+            '  1 layer: <span style="display:inline-flex;align-items:center;gap:5px;background:#FAEEDA;border:1px solid #EF9F27;border-radius:20px;padding:3px 10px;font-size:11px;color:#633806;">\u25cf 1 of 3 layers confirm \u2014 possible</span>\n' +
+            '  2 layers: <span style="display:inline-flex;align-items:center;gap:5px;background:#E1F5EE;border:1px solid #5DCAA5;border-radius:20px;padding:3px 10px;font-size:11px;color:#085041;">\u25cf 2 of 3 layers confirm \u2014 likely</span>\n' +
+            '  3 layers: <span style="display:inline-flex;align-items:center;gap:5px;background:#EEEDFE;border:1px solid #7F77DD;border-radius:20px;padding:3px 10px;font-size:11px;color:#3C3489;">\u25cf 3 of 3 layers confirm \u2014 high probability window</span>\n' +
+            'PART 2 \u2014 PEAK WINDOW: The next date range when the most layers align. Give specific month and year \u2014 never just "next year" or "soon".\n' +
+            'PART 3 \u2014 WHAT TO DO NOW: One concrete preparatory action before the peak window.\n' +
+            '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n';
+    }
+
     // ── Conditional: property transit history (Property & Vehicles or typed) ──
     if (isPropertyQ || isTyped) {
         systemPrompt +=
@@ -1505,6 +1539,7 @@ function buildSystemPrompt(categoryIdx, userQuestion) {
             '- Planet in 4th house period = that planet\'s energy activates home life\n';
     }
 
+    if (additionalContext) systemPrompt += additionalContext;
     return systemPrompt;
 }
 
@@ -1605,11 +1640,21 @@ function appendTyping() {
 function replaceTyping(id, text) {
     var el = document.getElementById(id);
     if (!el) return;
-    var escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Extract allowed badge spans before escaping so they survive HTML sanitisation
+    var badges = [];
+    var textWithPlaceholders = text.replace(/<span\s[^>]*style="[^"]*(?:border-radius|display\s*:\s*inline)[^"]*"[^>]*>[\s\S]*?<\/span>/gi, function(match) {
+        badges.push(match);
+        return '\x00BADGE' + (badges.length - 1) + '\x00';
+    });
+    var escaped = textWithPlaceholders.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     var formatted = escaped
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\n\n/g, '</p><p style="margin:0.6em 0">')
         .replace(/\n/g, '<br>');
+    // Reinsert badge spans (only <span> with inline styles — nothing else passes through)
+    badges.forEach(function(badge, i) {
+        formatted = formatted.replace('\x00BADGE' + i + '\x00', badge);
+    });
     el.innerHTML = '<span class="ai-label">Soul Nakshatra</span><p>' + formatted + '</p>';
     document.getElementById('chatMessages').scrollTop = 99999;
 }
