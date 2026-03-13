@@ -782,8 +782,9 @@ function renderBubbles(idx) {
 /* ═══════════════════════════════════════════════════════════
    CHAT — SYSTEM PROMPT BUILDER
 ═══════════════════════════════════════════════════════════ */
-function buildSystemPrompt(categoryIdx) {
+function buildSystemPrompt(categoryIdx, userQuestion) {
     var d   = window.aiAnalysisData || {};
+    userQuestion = (userQuestion || '').toLowerCase();
 
     // Build Rahu/Ketu context from live backend data — never hardcode
     var vt      = d.verified_current_transits || {};
@@ -1312,7 +1313,34 @@ function buildSystemPrompt(categoryIdx) {
         })() +
 
         'ACTIVE TOPIC: ' + cat.name + '\n' +
-        'TASK: ' + cat.task + '\n\n' +
+        'TASK: ' + (function() {
+            if (categoryIdx !== 6) return cat.task;
+            var genericSoulTask = cat.task;
+            if (userQuestion.includes('crave') || userQuestion.includes('soul actually')) {
+                return 'SOUL CRAVING READING — use these specific lenses only:\n'
+                    + '1. ATMAKARAKA: Identify the Atmakaraka planet and its sign in D9 (Navamsa chart). This is the soul\'s deepest hunger — describe what it literally craves, not what it has. Be specific: not "emotional depth" but what scene or experience would make the soul feel finally complete.\n'
+                    + '2. UNFULFILLED HOUSE: Find the most unoccupied or afflicted kama house (3rd, 7th, 11th). What desire does this house represent that keeps surfacing but never feeling fully satisfied?\n'
+                    + '3. RAHU OBSESSION: Rahu shows what the soul is magnetically pulled toward this lifetime even if it feels excessive. Name the specific obsession.\n'
+                    + '4. RIGHT NOW: What is the current dasha activating in terms of soul hunger — what craving is loudest in this exact period?\n'
+                    + 'End with bold **Right now:** + one concrete action the person can take this week to feed the soul craving.\n';
+            } else if (userQuestion.includes('peace') || userQuestion.includes('mental')) {
+                return 'MENTAL PEACE READING — use these specific lenses only:\n'
+                    + '1. 4TH HOUSE: The 4th house is the seat of mental peace. What sign rules it, who is its lord, where does that lord sit, and what does that tell us about WHERE this person finds peace — internally or externally, through solitude or people, through structure or flow?\n'
+                    + '2. MOON CONDITION: Is the Moon in a friendly or enemy sign, aspected by malefics? This shows how easily peace comes — describe the specific obstacle between this person and peace.\n'
+                    + '3. SATURN\'S ROLE: Saturn either disciplines the mind toward peace or creates chronic anxiety. Identify exactly which it is doing in this chart and why.\n'
+                    + '4. WHAT DESTROYS PEACE: Name the one planetary combination most likely to shatter mental calm for this person — be specific, not generic.\n'
+                    + 'End with bold **Right now:** + one specific practice that directly addresses the biggest peace obstacle.\n';
+            } else if (userQuestion.includes('happiness') || userQuestion.includes('archetype')) {
+                return 'HAPPINESS ARCHETYPE READING — use these specific lenses only:\n'
+                    + '1. ARCHETYPE NAME: Based on the 5th house sign, its lord, and Jupiter\'s placement, give this person\'s happiness archetype a specific evocative name — e.g. "The Sovereign Builder", "The Hidden Mystic", "The Joyful Architect". Explain what this archetype means in 2 sentences.\n'
+                    + '2. WHAT LIGHTS THEM UP: The 5th house shows what genuinely delights the soul — creativity, children, speculation, romance, performance. Name the specific activity or experience this person lights up doing, based on the 5th house planets and lord.\n'
+                    + '3. VENUS LAYER: Venus shows where beauty and pleasure live. Its sign, house, and nakshatra reveal the texture of happiness — describe the specific aesthetic or sensory experience that makes this person feel alive.\n'
+                    + '4. THE SHADOW OF JOY: What pattern blocks happiness for this archetype — what do they mistake for happiness that actually drains them? Be specific to the chart.\n'
+                    + 'End with bold **Right now:** + one concrete experience this week that matches their archetype perfectly.\n';
+            } else {
+                return genericSoulTask;
+            }
+        })() + '\n\n' +
 
         '=== CHART DATA — USE EXACTLY AS PROVIDED ===\n\n' +
         'LAGNA (Ascendant): ' + lagnaStr +
@@ -1465,7 +1493,7 @@ function sendChatMessage() {
     fetch(BACKEND_URL + '/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: buildSystemPrompt(isBubble ? activeCategoryIdx : -1), messages: chatHistory })
+        body: JSON.stringify({ system: buildSystemPrompt(isBubble ? activeCategoryIdx : -1, question), messages: chatHistory })
     })
     .then(function(res) {
         if (!res.ok) throw new Error('Server returned ' + res.status);
