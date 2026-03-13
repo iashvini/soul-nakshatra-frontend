@@ -1387,9 +1387,9 @@ Describe how this person feels on the inside — the Moon sign, Moon nakshatra, 
 LAYER 3 — THE SHADOW SIDE (2 sentences):
 Name one or two blind spots or patterns that hold this person back. Draw from debilitated planets, challenging house placements, or the shadow expression of strong planets. Be direct but compassionate — frame it as "the shadow of your greatest strength" not as a flaw. Give this layer an evocative name.
 
-CAREER FIELD — end with exactly one sentence:
-Career field: [Primary] — strongly indicated | [Secondary] — secondary fit.
-No percentages, no brackets, no "Why:" explanations.
+CAREER FIELD — your final sentence MUST start with the literal text "Career field:" and use this exact format with a pipe character separating two fields:
+Career field: [Primary field name] — strongly indicated | [Secondary field name] — secondary fit
+FORBIDDEN: Do not write "Your primary career field is..." or any natural-language sentence. Do not use percentages or brackets. The line must start with "Career field:" — this is a hard requirement.
 
 TONE: Write as if you are a wise astrologer speaking directly to this person — warm, specific, and surprising. Every sentence should feel like something only their chart could reveal, not generic astrology advice.
 Maximum 200 words for this section.
