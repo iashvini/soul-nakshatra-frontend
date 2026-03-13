@@ -1373,14 +1373,25 @@ Birth Data:
 Produce EXACTLY 3 sections using these exact headers. No preamble. No greeting. Start immediately with # 🎭 PERSONALITY. No other sections.
 
 # 🎭 PERSONALITY
-3-4 bullet points on core nature, strengths, and patterns. RULES FOR THIS SECTION:
-- First bullet MUST mention the rising sign AND the birth star {lagna_nak_name} by name with one specific quality it adds (e.g. "Virgo rising with {lagna_nak_name} gives you X")
-- Name planets and signs specifically — never say "your key planet" or "a certain house"
-- Include career field suggestion. Use EXACTLY this format:
-Career field: [Primary field] — strongly indicated | [Secondary field] — secondary fit
-No percentages, no brackets, no match scores. Maximum 2 fields.
-**Why:** [1-2 line reason based on chart data]
-Maximum 80 words for this section.
+Write exactly 7-8 sentences in flowing prose — absolutely no bullets, no dashes, no numbered points.
+
+Structure the response across these 3 layers:
+
+LAYER 1 — THE OPERATING SYSTEM (2 sentences):
+Describe how this person comes across to the world — the rising sign, lagna nakshatra {lagna_nak_name}, and every planet sitting in the 1st house. If multiple planets occupy the 1st house, name them and describe how they combine into a single outward personality. Give this layer a short evocative name in parentheses — e.g. "The Precision Engine" or "The Structured Visionary".
+
+LAYER 2 — THE EMOTIONAL INTERIOR (2-3 sentences):
+Describe how this person feels on the inside — the Moon sign, Moon nakshatra, and Moon house. If Moon is the Atmakaraka (highest degree planet), say so explicitly and explain what it means: their soul's deepest mission is expressed through their emotional nature. Describe the tension or contrast between the outer personality (Layer 1) and the inner emotional world — this contrast is often the most relatable part. Give this layer an evocative name.
+
+LAYER 3 — THE SHADOW SIDE (2 sentences):
+Name one or two blind spots or patterns that hold this person back. Draw from debilitated planets, challenging house placements, or the shadow expression of strong planets. Be direct but compassionate — frame it as "the shadow of your greatest strength" not as a flaw. Give this layer an evocative name.
+
+CAREER FIELD — end with exactly one sentence:
+Career field: [Primary] — strongly indicated | [Secondary] — secondary fit.
+No percentages, no brackets, no "Why:" explanations.
+
+TONE: Write as if you are a wise astrologer speaking directly to this person — warm, specific, and surprising. Every sentence should feel like something only their chart could reveal, not generic astrology advice.
+Maximum 200 words for this section.
 
 # 🔍 MAJOR EVENTS - LAST 7 YEARS ({current_year - 7}–{current_year})
 Analyze the last 7 years using the dasha periods, transits, and house activations. Report on ALL 4 categories below:
@@ -1414,7 +1425,7 @@ Name the active sub-period and what it specifically means for this person.
 Maximum 80 words for this section.
 
 IMPORTANT: No Next 12 Months section. No Next 5 Years section. No future predictions section.
-Total response maximum 250 words.
+Total response maximum 400 words.
 Person is {data_payload['current_age']} years old in {current_year}.
 Atmakaraka is {atmakaraka['name']} (highest degree: {atmakaraka['degree']}°).
 
@@ -1446,7 +1457,7 @@ VEDIC ASPECT RULES (Graha Drishti — apply to all transit and natal analysis):
                     {'role': 'system', 'content': system_instruction},
                     {'role': 'user',   'content': user_prompt}
                 ],
-                max_tokens=1200,
+                max_tokens=1800,
                 temperature=0.65
             )
             analysis_text = response.choices[0].message.content.strip()
