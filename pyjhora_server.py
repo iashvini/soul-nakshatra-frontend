@@ -1128,6 +1128,11 @@ def analyze_chart():
         ascendant_name = (chart_data.get('ascendant') or {}).get('rasi', {}).get('name') \
             or chart_data.get('ascendant') or 'Unknown'
 
+        # Lagna nakshatra
+        asc_nak_obj = (chart_data.get('ascendant') or {}).get('nakshatra', {})
+        lagna_nak_name = asc_nak_obj.get('name', '') if isinstance(asc_nak_obj, dict) else str(asc_nak_obj)
+        lagna_nak_lord = NAKSHATRA_LORDS.get(lagna_nak_name, 'Unknown')
+
         # Ensure antardashas are populated
         raw_ads = (chart_data.get('current_dasha') or {}).get('antar_dashas', [])
         if not raw_ads and (chart_data.get('current_dasha') or {}).get('maha_dasha'):
@@ -1173,12 +1178,16 @@ def analyze_chart():
         # Build planet details
         planet_details = []
         for p in (chart_data.get('planets') or []):
+            nak_obj = p.get('nakshatra') or {}
+            nak_name = nak_obj.get('name', '') if isinstance(nak_obj, dict) else str(nak_obj)
             planet_details.append({
                 'name': p.get('name'),
                 'house': p.get('house'),
                 'sign': (p.get('rasi') or {}).get('name') or p.get('sign'),
                 'degree': round(float((p.get('position') or {}).get('degree', 0) or p.get('degree', 0)), 2),
-                'retrograde': p.get('is_retrograde') or p.get('retrograde') or False
+                'retrograde': p.get('is_retrograde') or p.get('retrograde') or False,
+                'nakshatra': nak_name,
+                'nakshatra_lord': NAKSHATRA_LORDS.get(nak_name, '') if nak_name else ''
             })
 
         atmakaraka = max(planet_details, key=lambda p: p['degree']) if planet_details else \
@@ -1191,7 +1200,9 @@ def analyze_chart():
             'ascendant': {
                 'sign': ascendant_name,
                 'degree': round(float(chart_data.get('ascendant_degree') or
-                                      (chart_data.get('ascendant') or {}).get('degree', 0) or 0), 2)
+                                      (chart_data.get('ascendant') or {}).get('degree', 0) or 0), 2),
+                'birth_star': lagna_nak_name,
+                'birth_star_lord': lagna_nak_lord
             },
             'moon': {
                 'sign': chart_data.get('moon_sign'),
@@ -1225,8 +1236,16 @@ def analyze_chart():
             f"{d['period']}: {d['start']} to {d['end']}" for d in past_7_dashas
         ) if past_7_dashas else 'No antardasha data for last 7 years — use natal chart for past events'
 
+        def _dasha_nak(lord_name):
+            for p in planet_details:
+                if (p.get('name') or '').lower() == lord_name.lower():
+                    nak = p.get('nakshatra', '')
+                    lord = p.get('nakshatra_lord', '?')
+                    return f"{nak} (lord: {lord})" if nak else 'unknown'
+            return 'unknown'
+
         planet_table = '\n'.join(
-            f"{p['name']:<10} | House {p['house']} | {str(p['sign'] or ''):<12} | {p['degree']}° | {'R' if p['retrograde'] else 'D'}"
+            f"{p['name']:<10} | House {p['house']} | {str(p['sign'] or ''):<12} | {p['degree']}° | {'R' if p['retrograde'] else 'D'} | Birth star: {p.get('nakshatra','?')} (ruled by {p.get('nakshatra_lord','?')})"
             for p in planet_details
         )
 
@@ -1298,7 +1317,8 @@ def analyze_chart():
                 "Each section maximum 2-3 bullet points. No long paragraphs.",
                 "Speak directly to the person as if explaining to a smart friend with no astrology knowledge.",
                 "Do not use technical terms like Dasha, Nakshatra, Lagna, Bindu, Rasi, Navamsa, Dasamsa, SAV, D9, D10 — use plain English equivalents instead.",
-                "Say 'life period' not Dasha, 'birth star' not Nakshatra, 'rising sign' not Lagna, 'sub-period' not Antardasha, 'strength score' not Bindu.",
+                "Say 'life period' not Dasha, 'rising sign' not Lagna, 'sub-period' not Antardasha, 'strength score' not Bindu.",
+                f"BIRTH STAR RULE: Always name the birth star by its actual name (e.g., Hasta, Chitra, Anuradha). The person's rising sign birth star is '{lagna_nak_name}' (ruled by {lagna_nak_lord}). In the PERSONALITY section you MUST write '{lagna_nak_name}' by name — never just say 'birth star' without naming it. One sentence max.",
                 "CRITICAL: Do NOT add any greeting, preamble, introduction, or closing message. Start the response immediately with # 🎭 PERSONALITY and nothing before it.",
                 "CRITICAL: Produce exactly 3 sections only. No 4th section. No future predictions. Maximum 250 words total.",
                 "For the MAJOR EVENTS section always check ALL 4 categories. Never skip a category even if nothing happened — write 'No major activation in this area.' if nothing significant occurred.",
@@ -1335,6 +1355,13 @@ DASHA PERIODS — LAST 7 YEARS ({seven_years_ago.year}–{now.year}):
 CURRENT DASHA ({current_year}):
 {antardasha_name} ({antardasha_range})
 Mahadasha: {md.get('planet', 'Unknown')} ({md.get('start_date', '')} – {md.get('end_date', '')})
+  Mahadasha lord birth star: {_dasha_nak(md.get('planet', ''))}
+  Sub-period lord birth star: {_dasha_nak((antardasha_name or '').split('-')[-1].strip().split(' ')[0])}
+
+RISING SIGN BIRTH STAR: {lagna_nak_name} (ruled by {lagna_nak_lord})
+- Use this to add ONE specific personality texture beyond just the rising sign
+- E.g. if Anuradha (Saturn-ruled): disciplined loyalty, slow-burning intensity, devotion with structure
+- Weave the birth star quality into the personality description — do NOT list it as a data point
 
 Birth Data:
 - Date: {chart_data.get('date')}
@@ -1346,8 +1373,12 @@ Birth Data:
 Produce EXACTLY 3 sections using these exact headers. No preamble. No greeting. Start immediately with # 🎭 PERSONALITY. No other sections.
 
 # 🎭 PERSONALITY
-3-4 bullet points on core nature, strengths, and patterns. Include career field suggestion:
-**Career Field:** [Primary Field] (75-85% match) | [Secondary Field] (55-65% match)
+3-4 bullet points on core nature, strengths, and patterns. RULES FOR THIS SECTION:
+- First bullet MUST mention the rising sign AND the birth star {lagna_nak_name} by name with one specific quality it adds (e.g. "Virgo rising with {lagna_nak_name} gives you X")
+- Name planets and signs specifically — never say "your key planet" or "a certain house"
+- Include career field suggestion. Use EXACTLY this format:
+Career field: [Primary field] — strongly indicated | [Secondary field] — secondary fit
+No percentages, no brackets, no match scores. Maximum 2 fields.
 **Why:** [1-2 line reason based on chart data]
 Maximum 80 words for this section.
 
@@ -1374,7 +1405,7 @@ If ANY trigger is confirmed — name the year and what likely happened. Never sa
 4. RELATIONSHIPS
 Was there a period of harmony or significant stress in relationships, marriage, or partnerships? Any major relationship event like marriage, separation, or a significant new partnership? If yes: when and what caused it?
 
-Format: Put each category number and name on its OWN line, then write the content starting on the NEXT line (never on the same line as the category header). Write 2 sentences maximum per category. If nothing significant happened write: No major activation in this area.
+Format: Put each category number and name on its OWN line, then write the content starting on the NEXT line (never on the same line as the category header). Write 2 sentences maximum per category. NEVER write "No major activation in this area" or any variation — if a house shows no planetary triggers, write 1-2 sentences on what the quiet energy means: energy consolidating, a period of inward focus, or what to expect when activation next arrives. Make every period feel meaningful.
 Use plain English. No jargon. Maximum 120 words for this section.
 
 # ⚡ CURRENT CYCLE & FOCUS

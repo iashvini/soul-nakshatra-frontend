@@ -251,7 +251,7 @@
                     <button class="cat-tab" onclick="selectCategory(3,this)">👶 Kids &amp; Parenting</button>
                     <button class="cat-tab" onclick="selectCategory(4,this)">🏠 Property &amp; Vehicles</button>
                     <button class="cat-tab" onclick="selectCategory(5,this)">🤝 Partnership</button>
-                    <button class="cat-tab" onclick="selectCategory(6,this)">✨ Soul &amp; Fulfilment</button>
+                    <button class="cat-tab" onclick="selectCategory(6,this)" style="border:1.5px solid #7F77DD;color:#3C3489;font-weight:500;">✨ Soul &amp; Fulfilment</button>
                 </div>
 
                 <div class="bubble-row" id="bubbleRow"></div>
@@ -381,6 +381,17 @@ var sessionBirthDate        = '';
 var sessionBirthPlace       = '';
 var sessionBirthTime        = '';
 var sessionStartTime        = null;
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+function formatMonthYear(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getMonth()] + ' ' + d.getFullYear();
+}
 
 /* ═══════════════════════════════════════════════════════════
    PLACE SEARCH
@@ -534,12 +545,30 @@ function generateChart(event) {
                 console.log('[RAHU OK] Current: Rahu ' + _vt.rahu + ' until ' + _vt.rahu_to);
             }
         }
+        var dashaBadgeHtml = '';
+        if (cd && cd.maha_dasha && cd.maha_dasha.planet) {
+            var mdPlanet = cd.maha_dasha.planet;
+            var mdStart  = formatMonthYear(cd.maha_dasha.start_date);
+            var mdEnd    = formatMonthYear(cd.maha_dasha.end_date);
+            if (mdPlanet && mdStart && mdEnd) {
+                dashaBadgeHtml =
+                    '<div style="display:inline-flex;align-items:center;gap:6px;' +
+                    'background:#EEEDFE;border-radius:20px;padding:5px 12px;' +
+                    'margin:8px 0 10px;">' +
+                    '<span style="width:6px;height:6px;border-radius:50%;' +
+                    'background:#534AB7;display:inline-block;"></span>' +
+                    '<span style="font-size:12px;color:#3C3489;font-weight:500;">' +
+                    mdPlanet + ' period · ' + mdStart + ' \u2013 ' + mdEnd +
+                    '</span></div>';
+            }
+        }
         chartDisplay.innerHTML =
             '<div style="text-align:center;padding:1.75rem 1rem;">' +
             '<div style="font-size:2rem;margin-bottom:0.75rem;">✨</div>' +
             '<div style="font-weight:600;color:var(--accent-primary);margin-bottom:0.4rem;">Chart Generated Successfully</div>' +
             '<div style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:0.25rem;">' + date + ' at ' + time + '</div>' +
             '<div style="color:var(--text-secondary);font-size:0.82rem;">' + selectedLocation.name.split(',').slice(0, 2).join(',') + '</div>' +
+            dashaBadgeHtml +
             '</div>';
         document.getElementById('analyzeBtn').disabled = false;
         document.getElementById('cosmicSection').style.display = 'none';
@@ -643,6 +672,7 @@ function displayAIAnalysis(responseText) {
     var sections = parseAnalysisSections(responseText);
 
     var html = '<div id="analysis-content">';
+    html += '<p style="font-size:14px;color:#888;font-style:italic;margin:0 0 1.25rem;line-height:1.6;">Your chart has been read. Here is what the cosmos reveals.</p>';
     html += '<div class="personality-section"><h1>🎭 PERSONALITY</h1><div class="personality-body">' + formatText(sections.personality || responseText.substring(0, 800)) + '</div></div>';
     html += '<div class="major-events-section"><h1>🔍 MAJOR EVENTS - LAST 7 YEARS</h1>' + formatText(sections.majorEvents) + '</div>';
     html += '<div class="current-cycle-section"><h1>⚡ CURRENT CYCLE &amp; FOCUS</h1>' + formatText(sections.currentCycle) + '</div>';
@@ -1164,7 +1194,20 @@ function buildSystemPrompt(categoryIdx) {
         'If yes say: "Saturn is moving through a sensitive zone which intensifies life lessons."\n' +
         '- Even if the user does NOT mention stress but asks about health or the soul category, ' +
         'proactively check these 4 triggers and mention any that are currently active.\n' +
-        '- Always frame stress triggers as TRANSFORMATION opportunities, not as bad omens.\n\n' +
+        '- Always frame stress triggers as TRANSFORMATION opportunities, not as bad omens.\n' +
+        '- CAREER FIELD FORMAT: Write career fields as plain text only. ' +
+        'No percentages, no brackets, no match scores. ' +
+        'Use exactly this format: ' +
+        '"Career field: [Primary field] — strongly indicated | ' +
+        '[Secondary field] — secondary fit". ' +
+        'Maximum 2 fields. No other format is acceptable.\n' +
+        '- NO ACTIVATION FALLBACK: Never write "No major activation ' +
+        'in this area" or any variation of it. If a house shows ' +
+        'no planetary triggers in the last 7 years, instead write ' +
+        '1-2 sentences explaining what the quiet energy means for ' +
+        'the person — e.g. energy flowing inward, a period of ' +
+        'consolidation, or what to expect when activation next arrives. ' +
+        'Make the quiet period feel meaningful, not empty.\n\n' +
 
         'NAKSHATRA RULES:\n' +
         '- Each nakshatra has a ruling planet that colours how that planet or house expresses itself\n' +
