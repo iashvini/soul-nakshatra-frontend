@@ -8,7 +8,7 @@ import os
 import json
 import urllib.request
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import namedtuple
 import google.generativeai as genai
 
@@ -648,6 +648,16 @@ def calculate_chart(name, birth_dt, latitude, longitude, tz_offset_hours, jd):
     if not current_dasha:
         current_dasha = calculate_dasha_simple(moon_data['longitude'])
         dasha_cycle = None
+    # ── DIAGNOSTIC PRINTS ──
+    _md = (current_dasha or {}).get('maha_dasha', {})
+    _ads = (current_dasha or {}).get('antar_dashas', [])
+    _active_ad = next((ad for ad in _ads if ad.get('start') and ad.get('end') and
+                       datetime.fromisoformat(ad['start']) <= datetime.utcnow() <= datetime.fromisoformat(ad['end'])), None)
+    _pt = {k: (current_dasha or {}).get(k) for k in ['pratyantar','pratyantar_start','pratyantar_end','pratyantar_duration_days']}
+    print(f'[Dasha Debug] Mahadasha: {_md}')
+    print(f'[Dasha Debug] Antardasha: {_active_ad}')
+    print(f'[Dasha Debug] Pratyantar: {_pt}')
+    # ── END DIAGNOSTIC ──
     ashtakavarga_bindus = None
     try:
         print("\n[Ashtakavarga] Starting computation...")
@@ -1251,6 +1261,58 @@ def analyze_chart():
 
         md = (chart_data.get('current_dasha') or {}).get('maha_dasha') or {}
 
+        # ── Active dasha period extraction for prompt ──
+        _cd       = chart_data.get('current_dasha') or {}
+        _ads      = _cd.get('antar_dashas', [])
+        _active_ad = find_active_antardasha(_ads)
+        _today    = now.date()
+
+        def _days_remaining(date_str):
+            try:
+                return (date.fromisoformat(date_str) - _today).days
+            except Exception:
+                return '?'
+
+        def _fmt_date(date_str):
+            try:
+                return datetime.fromisoformat(date_str).strftime('%Y-%m-%d')
+            except Exception:
+                return date_str or '?'
+
+        _md_planet  = md.get('planet', 'Unknown')
+        _md_start   = _fmt_date(md.get('start_date', ''))
+        _md_end     = _fmt_date(md.get('end_date', ''))
+        _md_days    = _days_remaining(md.get('end_date', ''))
+
+        _ad_planet  = (_active_ad or {}).get('planet', antardasha_name or 'Unknown')
+        _ad_start   = _fmt_date((_active_ad or {}).get('start') or (_active_ad or {}).get('start_date', ''))
+        _ad_end     = _fmt_date((_active_ad or {}).get('end')   or (_active_ad or {}).get('end_date', ''))
+        _ad_days    = _days_remaining((_active_ad or {}).get('end') or (_active_ad or {}).get('end_date', ''))
+
+        _pt_planet  = _cd.get('pratyantar', '')
+        _pt_start   = _fmt_date(_cd.get('pratyantar_start', ''))
+        _pt_end     = _fmt_date(_cd.get('pratyantar_end', ''))
+        _pt_days    = _days_remaining(_cd.get('pratyantar_end', ''))
+
+        if _pt_planet:
+            _pt_end_human = datetime.fromisoformat(_cd.get('pratyantar_end', _pt_end)).strftime('%B %Y') \
+                if _cd.get('pratyantar_end') else _pt_end
+        else:
+            _pt_end_human = ''
+
+        active_dasha_block = (
+            f"════ ACTIVE DASHA PERIODS — USE THESE EXACT DATES ════\n"
+            f"TODAY      : {_today}\n"
+            f"MAHADASHA  : {_md_planet:<10} | {_md_start} \u2192 {_md_end}  (active — {_md_days} days remaining)\n"
+            f"ANTARDASHA : {_ad_planet:<10} | {_ad_start} \u2192 {_ad_end}  (active — {_ad_days} days remaining)\n"
+            + (f"PRATYANTAR : {_pt_planet:<10} | {_pt_start} \u2192 {_pt_end}  (active — {_pt_days} days remaining)\n"
+               if _pt_planet else "PRATYANTAR : Not available\n")
+            + f"════════════════════════════════════════════════════\n"
+            f"RULE: Never calculate or invent dasha dates. Only use the exact dates shown above.\n"
+            + (f"When mentioning the micro-period, always say '{_pt_planet} micro-period until {_pt_end_human}' — never any other date.\n"
+               if _pt_planet else '')
+        )
+
         # ── Sade Sati server-side calculation ──
         sign_order_ss = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
                          'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
@@ -1322,7 +1384,8 @@ def analyze_chart():
                 "CRITICAL: Do NOT add any greeting, preamble, introduction, or closing message. Start the response immediately with # 🎭 PERSONALITY and nothing before it.",
                 "CRITICAL: Produce exactly 3 sections only. No 4th section. No future predictions. Maximum 250 words total.",
                 "For the MAJOR EVENTS section always check ALL 4 categories. Never skip a category even if nothing happened — write 'No major activation in this area.' if nothing significant occurred.",
-                "Always check 8th house and Ketu activation for stress periods. Always check Sade Sati overlap with stress periods. Always check 4th house activation for property. Always check 7th house for relationship events."
+                "Always check 8th house and Ketu activation for stress periods. Always check Sade Sati overlap with stress periods. Always check 4th house activation for property. Always check 7th house for relationship events.",
+                "RULE 6 — DASHA DATES: Never calculate dasha or micro-period dates yourself. Always read them from the ACTIVE DASHA PERIODS block at the top of the user message. The micro-period planet is always the one listed under PRATYANTAR in that block, and its end date is always the date shown there — never any other date."
             ]
         })
 
@@ -1352,11 +1415,9 @@ Career Analysis from D10:
 DASHA PERIODS — LAST 7 YEARS ({seven_years_ago.year}–{now.year}):
 {past_dasha_text}
 
-CURRENT DASHA ({current_year}):
-{antardasha_name} ({antardasha_range})
-Mahadasha: {md.get('planet', 'Unknown')} ({md.get('start_date', '')} – {md.get('end_date', '')})
-  Mahadasha lord birth star: {_dasha_nak(md.get('planet', ''))}
-  Sub-period lord birth star: {_dasha_nak((antardasha_name or '').split('-')[-1].strip().split(' ')[0])}
+{active_dasha_block}
+  Mahadasha lord birth star: {_dasha_nak(_md_planet)}
+  Sub-period lord birth star: {_dasha_nak(_ad_planet)}
 
 RISING SIGN BIRTH STAR: {lagna_nak_name} (ruled by {lagna_nak_lord})
 - Use this to add ONE specific personality texture beyond just the rising sign
