@@ -648,16 +648,6 @@ def calculate_chart(name, birth_dt, latitude, longitude, tz_offset_hours, jd):
     if not current_dasha:
         current_dasha = calculate_dasha_simple(moon_data['longitude'])
         dasha_cycle = None
-    # ── DIAGNOSTIC PRINTS ──
-    _md = (current_dasha or {}).get('maha_dasha', {})
-    _ads = (current_dasha or {}).get('antar_dashas', [])
-    _active_ad = next((ad for ad in _ads if ad.get('start') and ad.get('end') and
-                       datetime.fromisoformat(ad['start']) <= datetime.utcnow() <= datetime.fromisoformat(ad['end'])), None)
-    _pt = {k: (current_dasha or {}).get(k) for k in ['pratyantar','pratyantar_start','pratyantar_end','pratyantar_duration_days']}
-    print(f'[Dasha Debug] Mahadasha: {_md}')
-    print(f'[Dasha Debug] Antardasha: {_active_ad}')
-    print(f'[Dasha Debug] Pratyantar: {_pt}')
-    # ── END DIAGNOSTIC ──
     ashtakavarga_bindus = None
     try:
         print("\n[Ashtakavarga] Starting computation...")
@@ -1118,6 +1108,24 @@ def generate_chart_route():
             'jupiter_nakshatra': _tnk('Jupiter'),
             'rahu_nakshatra':    _tnk('Rahu'),
         }
+
+        # ── Dasha Sandhi detection ──
+        try:
+            _md_end_str = (chart_data.get('data', {}).get('dasha', {})
+                           .get('current_dasha', {}).get('maha_dasha', {}).get('end_date'))
+            if _md_end_str:
+                _md_end_dt = datetime.fromisoformat(_md_end_str)
+                _sandhi_days = (_md_end_dt - today_dt).days
+                _sandhi_warning = 0 < _sandhi_days <= 240
+                _sandhi_days_remaining = _sandhi_days if _sandhi_warning else None
+            else:
+                _sandhi_warning = False
+                _sandhi_days_remaining = None
+        except Exception:
+            _sandhi_warning = False
+            _sandhi_days_remaining = None
+        chart_data['data']['dasha_sandhi_warning'] = _sandhi_warning
+        chart_data['data']['dasha_sandhi_days_remaining'] = _sandhi_days_remaining
 
         return jsonify(chart_data)
     except Exception as e:
