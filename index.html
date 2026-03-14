@@ -803,14 +803,18 @@ function buildCurrentStateCard() {
     // Battery Drain
     if (batteryDrain && batteryDrain.active) {
         var drainPlanets = batteryDrain.planets ? batteryDrain.planets.join(' + ') : '';
-        segments.push('At the same time, ' + drainPlanets + ' in your 12th house is draining your social battery to zero, pulling you toward withdrawal and quiet. This is not a malfunction. This is a Spiritual Sabbatical.');
+        var batteryPrefix = segments.length > 0 ? 'At the same time, ' : '';
+        segments.push(batteryPrefix + drainPlanets + ' in your 12th house is draining your social battery to zero, pulling you toward withdrawal and quiet. This is not a malfunction. This is a Spiritual Sabbatical.');
         pills.push({ label:'Spiritual Sabbatical', bg:'#EEEDFE', color:'#3C3489', dot:'#534AB7' });
         hasContent = true;
     }
 
     // Time-Lord Pinpoint
     if (timelord && timelord.mahadasha_transit_house) {
-        segments.push('Your immediate bandwidth this exact week is consumed by ' + timelord.mahadasha_topic + ', where ' + timelord.mahadasha_lord + ' — your current life-period ruler — is transiting right now.');
+        var timelordPrefix = segments.length > 0
+            ? 'Your immediate bandwidth this exact week is also consumed by '
+            : 'Right now your full bandwidth is consumed by ';
+        segments.push(timelordPrefix + timelord.mahadasha_topic + ', where ' + timelord.mahadasha_lord + ' — your current life-period ruler — is transiting right now.');
         hasContent = true;
     }
 

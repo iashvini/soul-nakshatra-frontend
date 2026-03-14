@@ -679,6 +679,24 @@ def calculate_chart(name, birth_dt, latitude, longitude, tz_offset_hours, jd):
     except Exception as e:
         print(f"[Transits] ERROR: {e}")
         transits = None
+    # ── Battery Drain diagnostic ──
+    try:
+        _rasi_names = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                       'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+        twelfth_sign = _rasi_names[(int(asc_long / 30.0) + 11) % 12]
+        natal_12th = [p['name'] for p in planet_positions if p.get('house') == 12]
+        transiting_12th = [
+            p['name'] for p in ((transits or {}).get('planets') or [])
+            if p.get('house') == 12
+        ]
+        _md_planet = (current_dasha or {}).get('maha_dasha', {}).get('planet', '')
+        dasha_lord_in_12th = _md_planet in transiting_12th if _md_planet else False
+        print(f'[Battery Drain] 12th sign: {twelfth_sign}')
+        print(f'[Battery Drain] Natal planets in 12th: {natal_12th}')
+        print(f'[Battery Drain] Transiting 12th: {transiting_12th}')
+        print(f'[Battery Drain] Dasha lord in 12th: {dasha_lord_in_12th} (lord={_md_planet})')
+    except Exception as e:
+        print(f'[Battery Drain] ERROR: {e}')
     try:
         divisional_charts = calculate_divisional_charts(jd, planet_positions)
         print('[D9 DEBUG]', json.dumps(divisional_charts.get('D9', {}), default=str)[:500])
