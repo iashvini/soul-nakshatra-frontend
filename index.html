@@ -693,11 +693,177 @@ function analyzeChart() {
 /* ═══════════════════════════════════════════════════════════
    DISPLAY — 3 SECTIONS ONLY (Next 5 Years removed)
 ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   CURRENT STATE ASSESSMENT CARD
+═══════════════════════════════════════════════════════════ */
+function buildCurrentStateCard() {
+    var data = window.aiAnalysisData;
+    if (!data) return '';
+
+    var SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+                 'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    function signIdx(s) { return SIGNS.indexOf(s); }
+
+    // ── Compute saturn_pressure from Moon sign vs Saturn transit ──
+    var saturnPressure = null;
+    var moonSign = data.nakshatra_details && data.nakshatra_details.chandra_rasi
+        ? data.nakshatra_details.chandra_rasi.name : '';
+    var saturnTransit = data.verified_current_transits
+        ? data.verified_current_transits.saturn : '';
+    if (moonSign && saturnTransit) {
+        var mIdx = signIdx(moonSign);
+        var sIdx = signIdx(saturnTransit);
+        if (mIdx !== -1 && sIdx !== -1) {
+            var diff = (sIdx - mIdx + 12) % 12;
+            if (diff === 11 || diff === 0 || diff === 1) saturnPressure = 'sade_sati';
+            else if (diff === 3)  saturnPressure = 'kantaka';
+            else if (diff === 7)  saturnPressure = 'ashtama';
+        }
+    }
+
+    // ── Compute nodal_fog — Rahu in 1st or 7th house from ascendant ──
+    var nodalFog = { active: false };
+    var lagnaSign = data.ascendant
+        ? (data.ascendant.rasi ? data.ascendant.rasi.name
+            : (data.ascendant.sign ? data.ascendant.sign.name : '')) : '';
+    var rahuTransit = data.verified_current_transits
+        ? data.verified_current_transits.rahu : '';
+    if (lagnaSign && rahuTransit) {
+        var lIdx = signIdx(lagnaSign);
+        var rIdx = signIdx(rahuTransit);
+        if (lIdx !== -1 && rIdx !== -1) {
+            var rahuHouse = (rIdx - lIdx + 12) % 12 + 1;
+            if (rahuHouse === 1 || rahuHouse === 7) nodalFog = { active: true };
+        }
+    }
+
+    // ── Compute battery_drain — planets in natal 12th house ──
+    var batteryDrain = { active: false, planets: [] };
+    if (data.planets_in_houses && data.planets_in_houses['House_12']) {
+        var h12Planets = (data.planets_in_houses['House_12'].planets || [])
+            .map(function(p) { return p.name; });
+        if (h12Planets.length > 0) batteryDrain = { active: true, planets: h12Planets };
+    }
+
+    // ── Compute timelord_transit — mahadasha lord's current transit house ──
+    var timelord = null;
+    var HOUSE_TOPICS = {
+        1:'self-identity and personal vitality', 2:'finances and security',
+        3:'communication and courage', 4:'home and emotional foundations',
+        5:'creativity and children', 6:'work dynamics and health',
+        7:'partnerships and relationships', 8:'deep transformation',
+        9:'fortune and higher purpose', 10:'career and public standing',
+        11:'income and social network', 12:'spirituality and retreat'
+    };
+    var mdPlanet = data.current_dasha && data.current_dasha.maha_dasha
+        ? data.current_dasha.maha_dasha.planet : '';
+    if (mdPlanet && lagnaSign && data.current_transits && data.current_transits.planets) {
+        var lIdx2 = signIdx(lagnaSign);
+        (data.current_transits.planets || []).forEach(function(tp) {
+            if (timelord || tp.name !== mdPlanet) return;
+            var tSign = tp.rasi ? (tp.rasi.name || tp.rasi) : '';
+            var tIdx = signIdx(tSign);
+            if (lIdx2 !== -1 && tIdx !== -1) {
+                var tHouse = (tIdx - lIdx2 + 12) % 12 + 1;
+                timelord = {
+                    mahadasha_lord: mdPlanet,
+                    mahadasha_transit_house: tHouse,
+                    mahadasha_topic: HOUSE_TOPICS[tHouse] || 'life affairs'
+                };
+            }
+        });
+    }
+
+    var segments = [];
+    var pills    = [];
+    var hasContent = false;
+
+    // Saturn Pressure
+    if (saturnPressure === 'kantaka') {
+        segments.push('You are in a Structural Stress-Test — Saturn is pressing your emotional foundations (Kantaka Shani), making daily life feel heavier than it should.');
+        pills.push({ label:'Kantaka Shani', bg:'#FAEEDA', color:'#633806', dot:'#BA7517' });
+        hasContent = true;
+    } else if (saturnPressure === 'sade_sati') {
+        segments.push('You are moving through Sade Sati — Saturn is transiting your core identity zone, restructuring who you are at the deepest level. The weight you feel is real and purposeful.');
+        pills.push({ label:'Sade Sati', bg:'#FAEEDA', color:'#633806', dot:'#BA7517' });
+        hasContent = true;
+    } else if (saturnPressure === 'ashtama') {
+        segments.push('Saturn is in your 8th position from the Moon — a Structural Stress-Test of sudden shifts and hidden pressures. What feels like disruption is actually transformation in progress.');
+        pills.push({ label:'Ashtama Shani', bg:'#FAEEDA', color:'#633806', dot:'#BA7517' });
+        hasContent = true;
+    }
+
+    // Nodal Brain Fog
+    if (nodalFog && nodalFog.active) {
+        segments.push('The nodes are crossing your most personal axis — you are inside a Reality Distortion Field right now. Feeling restless, misunderstood, or unclear about your direction is not weakness. It is the fog of transition. It lifts.');
+        pills.push({ label:'Reality Distortion Field', bg:'#FCEBEB', color:'#791F1F', dot:'#E24B4A' });
+        hasContent = true;
+    }
+
+    // Battery Drain
+    if (batteryDrain && batteryDrain.active) {
+        var drainPlanets = batteryDrain.planets ? batteryDrain.planets.join(' + ') : '';
+        segments.push('At the same time, ' + drainPlanets + ' in your 12th house is draining your social battery to zero, pulling you toward withdrawal and quiet. This is not a malfunction. This is a Spiritual Sabbatical.');
+        pills.push({ label:'Spiritual Sabbatical', bg:'#EEEDFE', color:'#3C3489', dot:'#534AB7' });
+        hasContent = true;
+    }
+
+    // Time-Lord Pinpoint
+    if (timelord && timelord.mahadasha_transit_house) {
+        segments.push('Your immediate bandwidth this exact week is consumed by ' + timelord.mahadasha_topic + ', where ' + timelord.mahadasha_lord + ' — your current life-period ruler — is transiting right now.');
+        hasContent = true;
+    }
+
+    // Dasha period pill — always shown alongside any active state
+    var dashaData = data.current_dasha;
+    if (dashaData && dashaData.maha_dasha) {
+        var mdLabel = dashaData.maha_dasha.planet || '';
+        var mdEnd   = dashaData.maha_dasha.end_date || '';
+        var mdEndFmt = mdEnd ? formatMonthYear(mdEnd) : '';
+        pills.push({
+            label:  mdLabel + ' period' + (mdEndFmt ? ' \u00b7 until ' + mdEndFmt : ''),
+            bg:     'var(--color-background-secondary, #F5F5F5)',
+            color:  'var(--color-text-secondary, #666)',
+            dot:    '#D85A30',
+            border: '0.5px solid var(--color-border-tertiary, #E0E0E0)'
+        });
+    }
+
+    if (!hasContent) return '';
+
+    var narrative = segments.join(' ');
+
+    var pillsHtml = pills.map(function(p) {
+        var border = p.border || ('1px solid ' + p.bg);
+        return '<span style="display:inline-flex;align-items:center;gap:5px;'
+            + 'background:' + p.bg + ';border:' + border + ';border-radius:20px;'
+            + 'padding:3px 10px;font-size:11px;color:' + p.color + ';margin:2px 3px 2px 0;">'
+            + '<span style="width:5px;height:5px;border-radius:50%;background:' + p.dot
+            + ';display:inline-block;flex-shrink:0;"></span>'
+            + p.label + '</span>';
+    }).join('');
+
+    return '<div style="background:#fff;border:0.5px solid #E8E8E8;'
+        + 'border-left:3px solid #534AB7;border-radius:0 12px 12px 0;'
+        + 'padding:1.25rem;margin:12px 0 16px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+        + '<p style="font-size:13px;font-weight:500;color:#534AB7;margin:0;">\u26a1 Where you are right now</p>'
+        + '<span style="font-size:11px;color:#999;">\u00b7 '
+        + new Date().toLocaleString('en-US', { month:'long', year:'numeric' })
+        + '</span></div>'
+        + '<p style="font-size:14px;color:#333;line-height:1.75;margin:0 0 12px;">'
+        + narrative + '</p>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + pillsHtml + '</div>'
+        + '</div>';
+}
+
 function displayAIAnalysis(responseText) {
     var cosmicEl = document.getElementById('cosmicSection');
     var sections = parseAnalysisSections(responseText);
 
+    var stateCard = buildCurrentStateCard();
     var html = '<div id="analysis-content">';
+    if (stateCard) html += stateCard;
     html += '<p style="font-size:14px;color:#888;font-style:italic;margin:0 0 1.25rem;line-height:1.6;">Your chart has been read. Here is what the cosmos reveals.</p>';
     html += '<div class="personality-section"><h1>🎭 PERSONALITY</h1><div class="personality-body">' + formatText(sections.personality || responseText.substring(0, 800)) + '</div></div>';
     html += '<div class="major-events-section"><h1>🔍 MAJOR EVENTS - LAST 7 YEARS</h1>' + formatText(sections.majorEvents) + '</div>';
