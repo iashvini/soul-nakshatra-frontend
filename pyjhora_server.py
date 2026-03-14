@@ -447,6 +447,23 @@ def get_sign_lord(sign_num):
     return lords[sign_num % 12]
 
 
+_SIGN_ORDER = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo',
+               'Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']
+
+
+def get_house_lord(sign_name):
+    idx = _SIGN_ORDER.index(sign_name) if sign_name in _SIGN_ORDER else -1
+    return get_sign_lord(idx) if idx != -1 else ''
+
+
+def format_month_year(date_str):
+    try:
+        d = datetime.fromisoformat(str(date_str))
+        return d.strftime('%b %Y')
+    except Exception:
+        return str(date_str)
+
+
 def calculate_divisional_charts(jd, birth_planets):
     rasi_names = [
         'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
@@ -1145,6 +1162,89 @@ def generate_chart_route():
         chart_data['data']['dasha_sandhi_warning'] = _sandhi_warning
         chart_data['data']['dasha_sandhi_days_remaining'] = _sandhi_days_remaining
 
+        # ── Active Trigger Detection (Priority 1–5) ──
+        try:
+            _vct        = chart_data['data']['verified_current_transits']
+            _t_saturn   = _vct.get('saturn', '')
+            _t_rahu     = _vct.get('rahu', '')
+            _t_ketu     = _vct.get('ketu', '')
+            _t_jupiter  = _vct.get('jupiter', '')
+            _lagna_sign = asc_data.get('rasi', {}).get('name', '') if asc_data else ''
+            _lagna_idx  = _SIGN_ORDER.index(_lagna_sign) if _lagna_sign in _SIGN_ORDER else -1
+            _nd         = chart_data['data'].get('nakshatra_details') or {}
+            _moon_sign  = _nd.get('chandra_rasi', {}).get('name', '') if isinstance(_nd.get('chandra_rasi'), dict) else ''
+            _moon_idx   = _SIGN_ORDER.index(_moon_sign) if _moon_sign in _SIGN_ORDER else -1
+            _md_lord    = (current_dasha or {}).get('maha_dasha', {}).get('planet', '')
+            _natal_pls  = chart_data['data'].get('planets', [])
+
+            # P1 — Identity Override
+            identity_override = None
+            if _lagna_sign:
+                if   _t_saturn == _lagna_sign:
+                    identity_override = {'type':'identity_override','planet':'Saturn','label':'Identity Reconstruction','pill_color':'amber'}
+                elif _t_rahu == _lagna_sign:
+                    identity_override = {'type':'identity_override','planet':'Rahu','label':'Identity Reinvention','pill_color':'amber'}
+                elif _t_ketu == _lagna_sign:
+                    identity_override = {'type':'identity_override','planet':'Ketu','label':'Identity Dissolution','pill_color':'amber'}
+
+            # P2 — Metamorphosis (Sade Sati or 8th-lord Mahadasha)
+            saturn_pressure = None
+            if _moon_sign and _t_saturn and _moon_idx != -1 and _t_saturn in _SIGN_ORDER:
+                _s_idx = _SIGN_ORDER.index(_t_saturn)
+                _diff  = (_s_idx - _moon_idx + 12) % 12
+                if   _diff in (11, 0, 1): saturn_pressure = 'sade_sati'
+                elif _diff == 3:          saturn_pressure = 'kantaka'
+                elif _diff == 7:          saturn_pressure = 'ashtama'
+            _eighth_lord = get_house_lord(_SIGN_ORDER[(_lagna_idx + 7) % 12]) if _lagna_idx != -1 else ''
+            metamorphosis = None
+            if saturn_pressure == 'sade_sati':
+                metamorphosis = {'type':'metamorphosis','source':'sade_sati','label':'Sade Sati — Structural Teardown','pill_color':'amber'}
+            elif _md_lord and _md_lord == _eighth_lord:
+                metamorphosis = {'type':'metamorphosis','source':'8th_lord_dasha','label':'Metamorphosis Period','pill_color':'amber'}
+            _saturn_pressure_label = {'kantaka':'Kantaka Shani','ashtama':'Ashtama Shani'}.get(saturn_pressure, '')
+
+            # P3 — Battery Drain (natal 12th house)
+            _natal_12th = [p['name'] for p in _natal_pls if p.get('house') == 12]
+            battery_drain = {'type':'battery_drain','active':bool(_natal_12th),'planets':_natal_12th,'label':'Spiritual Sabbatical','pill_color':'purple'} if _natal_12th else None
+
+            # P4 — Career Crucible
+            _tenth_sign  = _SIGN_ORDER[(_lagna_idx + 9) % 12] if _lagna_idx != -1 else ''
+            _tenth_lord  = get_house_lord(_tenth_sign) if _tenth_sign else ''
+            _major       = {'Saturn':_t_saturn,'Jupiter':_t_jupiter,'Rahu':_t_rahu,'Ketu':_t_ketu}
+            _tx_10th     = [p for p, s in _major.items() if s == _tenth_sign]
+            career_crucible = {'type':'career_crucible','planets':_tx_10th,'label':'Career Crucible','pill_color':'coral'} \
+                if (_tx_10th or (_md_lord and _md_lord == _tenth_lord)) else None
+
+            # P5 — Root Shift
+            _fourth_sign = _SIGN_ORDER[(_lagna_idx + 3) % 12] if _lagna_idx != -1 else ''
+            _tx_4th      = [p for p, s in _major.items() if s == _fourth_sign]
+            root_shift   = {'type':'root_shift','planets':_tx_4th,'label':'Root Shift','pill_color':'teal'} if _tx_4th else None
+
+            # Nodal Fog (lower priority)
+            nodal_fog = None
+            if _lagna_idx != -1 and _t_rahu in _SIGN_ORDER:
+                _rahu_house = (_SIGN_ORDER.index(_t_rahu) - _lagna_idx + 12) % 12 + 1
+                if _rahu_house in (1, 7):
+                    nodal_fog = {'type':'nodal_fog','active':True,'label':'Reality Distortion Field','pill_color':'red'}
+
+            # Rank and cap at top 2
+            all_triggers = []
+            if identity_override:   all_triggers.append(identity_override)
+            if metamorphosis:       all_triggers.append(metamorphosis)
+            elif saturn_pressure in ('kantaka', 'ashtama'):
+                all_triggers.append({'type':'saturn_pressure','source':saturn_pressure,'label':_saturn_pressure_label,'pill_color':'amber'})
+            if battery_drain:       all_triggers.append(battery_drain)
+            if career_crucible:     all_triggers.append(career_crucible)
+            if root_shift:          all_triggers.append(root_shift)
+            if nodal_fog:           all_triggers.append(nodal_fog)
+
+            chart_data['data']['active_triggers'] = all_triggers[:2]
+            chart_data['data']['saturn_pressure']  = saturn_pressure
+            print(f'[Triggers] {[t["label"] for t in all_triggers[:2]]}')
+        except Exception as _te:
+            print(f'[Trigger Detection] ERROR: {_te}')
+            chart_data['data']['active_triggers'] = []
+
         return jsonify(chart_data)
     except Exception as e:
         print(f"✗ Error generating chart: {e}")
@@ -1569,6 +1669,127 @@ VEDIC ASPECT RULES (Graha Drishti — apply to all transit and natal analysis):
             analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
             return Response(analysis_text, mimetype='text/plain')
 
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+PILL_COLORS = {
+    'amber':  {'bg':'#FAEEDA', 'border':'1px solid #EF9F27', 'color':'#633806', 'dot':'#BA7517'},
+    'purple': {'bg':'#EEEDFE', 'border':'1px solid #AFA9EC', 'color':'#3C3489', 'dot':'#534AB7'},
+    'coral':  {'bg':'#FAECE7', 'border':'1px solid #F0997B', 'color':'#993C1D', 'dot':'#D85A30'},
+    'teal':   {'bg':'#E1F5EE', 'border':'1px solid #5DCAA5', 'color':'#085041', 'dot':'#1D9E75'},
+    'red':    {'bg':'#FCEBEB', 'border':'1px solid #E87C7C', 'color':'#791F1F', 'dot':'#E24B4A'},
+}
+
+
+@app.route('/api/current-state', methods=['POST'])
+def current_state():
+    try:
+        data           = request.json or {}
+        chart_data     = data.get('chart_data', {})
+        active_triggers = data.get('active_triggers', [])
+
+        if not active_triggers:
+            return jsonify({'narrative': None, 'pills': []})
+
+        # Extract chart context
+        lagna     = chart_data.get('ascendant') or {}
+        moon      = chart_data.get('moon') or {}
+        atma      = chart_data.get('atmakaraka') or {}
+        mahadasha = chart_data.get('current_mahadasha') or {}
+        age       = chart_data.get('current_age', '')
+
+        lagna_sign = lagna.get('rasi', {}).get('name', '') if isinstance(lagna.get('rasi'), dict) else ''
+        lagna_nak  = lagna.get('nakshatra', {}).get('name', '') if isinstance(lagna.get('nakshatra'), dict) else ''
+        moon_sign  = moon.get('chandra_rasi', {}).get('name', '') if isinstance(moon.get('chandra_rasi'), dict) else ''
+        moon_nak   = moon.get('nakshatra', {}).get('name', '') if isinstance(moon.get('nakshatra'), dict) else ''
+        atma_planet = atma.get('planet', '')
+        atma_d9    = atma.get('d9_sign', '')
+        md_planet  = ''
+        md_end     = ''
+        if isinstance(mahadasha, dict):
+            if 'maha_dasha' in mahadasha:
+                md_planet = mahadasha['maha_dasha'].get('planet', '')
+                md_end    = mahadasha['maha_dasha'].get('end_date', '')
+            else:
+                md_planet = mahadasha.get('planet', '')
+                md_end    = mahadasha.get('end_date', '')
+
+        trigger_lines = '\n'.join(
+            f"Trigger: {t.get('type')} | Label: {t.get('label')} | "
+            f"Planet: {t.get('planet','')} | Source: {t.get('source','')}"
+            for t in active_triggers
+        )
+
+        system_prompt = (
+            "You are a master Vedic astrologer writing the opening paragraph of a personal reading. "
+            "Write EXACTLY 3-4 sentences. No bullet points. No headers. Flowing prose only. "
+            "Speak directly to the person as 'you'. Use plain English — no Sanskrit jargon. "
+            "Be direct, warm, and specific to this chart. "
+            "This paragraph must make the person feel deeply seen and understood. "
+            "Use the trigger descriptions and chart context to write something that could only apply "
+            "to this exact person in this exact moment. "
+            "End with one sentence of reframe — why this condition is purposeful, not punishing."
+        )
+        user_prompt = (
+            f"Chart context:\n"
+            f"Rising sign: {lagna_sign} ({lagna_nak})\n"
+            f"Moon: {moon_sign} ({moon_nak})\n"
+            f"Atmakaraka: {atma_planet} in {atma_d9} (D9)\n"
+            f"Current period: {md_planet} Mahadasha\n"
+            f"Age: {age}\n\n"
+            f"Active triggers (ranked by priority):\n{trigger_lines}\n\n"
+            f"Write the Current State paragraph now."
+        )
+
+        narrative = None
+        if USE_XAI and xai_client:
+            try:
+                resp = xai_client.chat.completions.create(
+                    model='grok-3-mini',
+                    max_tokens=150,
+                    temperature=0.7,
+                    messages=[
+                        {'role': 'system', 'content': system_prompt},
+                        {'role': 'user',   'content': user_prompt}
+                    ]
+                )
+                narrative = resp.choices[0].message.content.strip()
+                print(f'[current-state] Grok tokens: {resp.usage.total_tokens}')
+            except Exception as e:
+                print(f'[current-state] Grok error: {e}')
+        else:
+            try:
+                api_key = os.environ.get('GEMINI_API_KEY')
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    m = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_prompt,
+                                              generation_config={'temperature':0.7,'max_output_tokens':200})
+                    narrative = m.generate_content(user_prompt).text.strip()
+            except Exception as e:
+                print(f'[current-state] Gemini error: {e}')
+
+        # Build pills
+        pills = []
+        for t in active_triggers:
+            color_key = t.get('pill_color', 'purple')
+            pill = dict(PILL_COLORS.get(color_key, PILL_COLORS['purple']))
+            pill['label'] = t.get('label', '')
+            pills.append(pill)
+
+        # Always add dasha period pill
+        if md_planet:
+            end_fmt = format_month_year(md_end) if md_end else ''
+            pills.append({
+                'bg': 'transparent',
+                'border': '0.5px solid #E0E0E0',
+                'color': '#666',
+                'dot': '#D85A30',
+                'label': md_planet + ' period' + (' \u00b7 until ' + end_fmt if end_fmt else '')
+            })
+
+        return jsonify({'narrative': narrative, 'pills': pills})
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
